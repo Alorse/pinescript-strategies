@@ -1,0 +1,46 @@
+//@version=4
+study(title="KDJ + MACD Cross [Alorse]", shorttitle = "KDJ + MACD Cross", format=format.price)
+ilong = input(9, title="period", type=input.integer, group="KDJ")
+isig = input(3, title="signal", type=input.integer, group="KDJ")
+
+bcwsma(s,l,m) =>
+    _bcwsma = float(na)
+    _s = s
+    _l = l
+    _m = m
+    _bcwsma := (_m*_s+(_l-_m)*nz(_bcwsma[1]))/_l
+    _bcwsma
+    
+c = close
+h = highest(high, ilong)
+l = lowest(low,ilong)
+RSV = 100*((c-l)/(h-l))
+pK = bcwsma(RSV, isig, 1)
+pD = bcwsma(pK, isig, 1)
+pJ = 3 * pK-2 * pD
+
+plot(pK, color=#1E88E5)
+plot(pD, color=#FF6F00)
+plot(pJ, color=#000000)
+bgcolor(pJ>pD? color.green : color.red, transp=85)
+
+// Getting inputs
+fast_length = input(title="Fast Length", type=input.integer, defval=12, group="MACD")
+slow_length = input(title="Slow Length", type=input.integer, defval=26, group="MACD")
+src = input(title="Source", type=input.source, defval=close, group="MACD")
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group="MACD")
+sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+
+// Calculating
+fast_ma = sma_source == "SMA" ? sma(src, fast_length) : ema(src, fast_length)
+slow_ma = sma_source == "SMA" ? sma(src, slow_length) : ema(src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_length)
+
+if (crossover(pJ, pD) and crossover(macd, signal))
+    line.new(bar_index, 0, bar_index, 100, xloc.bar_index, extend.both, color.new(color.green, 0), line.style_solid, 2)
+    alert("KDJ Cross + MACD Cross ⬆")
+if (crossunder(pJ, pD) and crossunder(macd, signal))
+    line.new(bar_index, 0, bar_index, 100, xloc.bar_index, extend.both, color.new(color.red, 0), line.style_solid, 2)
+    alert("KDJ Cross + MACD Cross ⬇")

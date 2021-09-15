@@ -1,0 +1,46 @@
+//
+//@author KODIFY.NET https://kodify.net/tradingview/strategies/bollinger-breakout/
+//@version=4
+// 1. Define strategy settings
+strategy(title="Bollinger Breakout [kodify]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+bbGroup = "Bollindger Bands"
+smaLength = input(title="SMA Length", type=input.integer, defval=350, group=bbGroup)
+stdLength = input(title="StdDev Length", type=input.integer, defval=350, group=bbGroup)
+ubOffset = input(title="Upper Band Offset", type=input.float, defval=2.5, step=0.5, group=bbGroup)
+lbOffset = input(title="Lower Band Offset", type=input.float, defval=2.5, step=0.5, group=bbGroup)
+
+stratGroup = "Strategy"
+showLong = input(true, title="Long entries", group=stratGroup)
+showShort = input(false, title="Short entries", group=stratGroup)
+
+// 2. Calculate strategy values
+smaValue = sma(close, smaLength)
+stdDev   = stdev(close, stdLength)
+
+upperBand = smaValue + (stdDev * ubOffset)
+lowerBand = smaValue - (stdDev * lbOffset)
+
+// 3. Output strategy data
+plot(series=smaValue, title="SMA", color=color.blue)
+plot(series=upperBand, title="UB", color=color.new(color.teal, 50))
+plot(series=lowerBand, title="LB", color=color.new(color.teal, 50))
+
+// 4. Determine long trading conditions
+enterLong = crossover(close, upperBand)
+exitLong  = crossunder(close, smaValue)
+
+// 5. Code short trading conditions
+enterShort = crossunder(close, lowerBand)
+exitShort  = crossover(close, smaValue)
+
+// 6. Submit entry orders
+if showLong
+    strategy.entry(id="EL", long=true, when=enterLong)
+    strategy.close(id="EL", when=exitLong)
+
+if showShort
+    strategy.entry(id="ES", long=false, when=enterShort)
+    strategy.close(id="ES", when=exitShort)
+
+// 7. Submit exit orders

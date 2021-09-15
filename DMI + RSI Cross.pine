@@ -1,0 +1,23 @@
+//@version=4
+study("Directional Movement Index [Alorse]", shorttitle="DMI [Alorse]", max_labels_count=500)
+len = input(14, minval=1, title="DI Length")
+lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
+keyLevel = input(25, title="Key level")
+showCross = input(title="Show RSI labels", defval=false)
+[diplus,diminus,adx] = dmi(len, lensig)
+colo = diplus > diminus ? color.teal : color.maroon
+plot(adx, color=colo, title="ADX", linewidth=2)
+hline(keyLevel)
+cond = adx > keyLevel
+bgcolor(cond ? color.silver : na)
+
+// RSI
+src = input(close, "Source", type = input.source, group="RSI")
+UpL = input(title="Up level", defval=64, group="RSI")
+DownL = input(title="down level", defval=36, group="RSI")
+up = rma(max(change(src), 0), len)
+down = rma(-min(change(src), 0), len)
+rsi = rsi(src, len)
+color = rsi > UpL or rsi < DownL ? color.gray : color.orange
+if adx >= keyLevel-1 and adx <= keyLevel+1 and adx[1] < keyLevel and showCross
+    label.new(bar_index, keyLevel-5, tostring(rsi[0], '#.##'), color=color, style=label.style_label_up, textcolor=color.white, size=size.small)

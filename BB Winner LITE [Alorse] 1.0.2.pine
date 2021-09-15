@@ -1,0 +1,39 @@
+//
+//@author Alorse
+//@version=4
+strategy("Bollinger Bands Winner LITE [Alorse]", shorttitle="BB Winner LITE [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+verTxt = "1.0.2"
+version = input(title="Version", type=input.string, defval=verTxt, options=[verTxt], tooltip="This is informational only, nothing will change.")
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+offset = input(0, "Offset", type = input.integer, minval = -500, maxval = 500, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+pb1 = plot(upper, color=color.new(color.teal, 50), title="Upper")
+pb2 = plot(lower, color=color.new(color.teal, 50), title="Lower")
+fill(pb1, pb2, color=color.new(color.teal, 98), title="Background")
+plot(basis, "Basis", color=color.new(color.orange, 50), offset = offset)
+
+//Strategy Conditions
+showShort = input(false, title="Show Short entries", group="Strategy")
+candleper = input(title="Candle % below/above the BB", type=input.float, minval=1, maxval=100, defval=30, group="Strategy")* 0.01
+candle_size = high-low
+buyzone = (candle_size*candleper) + low
+sellzone = high - (candle_size*candleper)
+
+buy = buyzone < lower //and close < open
+
+strategy.entry("Long", true, when=buy)
+if showShort
+    strategy.entry("Short", false, when=buyzone > upper)
+else 
+    strategy.close("Long", when=buyzone > upper, comment="Close or Stop limit")

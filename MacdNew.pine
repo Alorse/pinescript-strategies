@@ -1,0 +1,146 @@
+//@version=4
+strategy(title="MACD + Divergences [Alorse]", shorttitle = "MACD + Divergences", pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+// Getting inputs
+src = input(title="Source", type=input.source, defval=close)
+fast_length = input(title="Fast Length", type=input.integer, defval=12)
+slow_length = input(title="Slow Length", type=input.integer, defval=26)
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9)
+sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
+sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
+
+col_macd = input(#2962FF, "MACD Line  ", input.color, group="Color Settings", inline="MACD")
+col_signal = input(#FF6D00, "Signal Line  ", input.color, group="Color Settings", inline="Signal")
+showCross = input(title="Show Signals&MACD Cross", defval=true, group="Color Settings") // Show cross bt MACD & Signal
+col_grow_above = input(#00796b, "Above   Grow", input.color, group="Histogram", inline="Above")
+col_fall_above = input(#26a69a, "Fall", input.color, group="Histogram", inline="Above")
+col_grow_below = input(#ef5350, "Below Grow", input.color, group="Histogram", inline="Below")
+col_fall_below = input(#b71c1c, "Fall", input.color, group="Histogram", inline="Below")
+
+fast_ma = sma_source == "SMA" ? sma(src, fast_length) : ema(src, fast_length)
+slow_ma = sma_source == "SMA" ? sma(src, slow_length) : ema(src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_length)
+hist = macd - signal
+osc = macd
+
+plot(hist, title="Histogram", style=plot.style_columns, color=color.new((hist>=0 ? (hist[1] < hist ? col_grow_above : col_fall_above) : (hist[1] < hist ? col_grow_below : col_fall_below) ),0))
+plot(macd, title="MACD", color=color.new(col_macd, 10))
+plot(signal, title="Signal", color=color.new(col_signal, 10))
+
+donttouchzero = input(title="Don't touch the zero line?", defval=true)
+
+//Divergences
+lbR = input(title="Pivot Lookback Right", defval=5, group="Divergences")
+lbL = input(title="Pivot Lookback Left", defval=5, group="Divergences")
+rangeUpper = input(title="Max of Lookback Range", defval=60, group="Divergences")
+rangeLower = input(title="Min of Lookback Range", defval=5, group="Divergences")
+plotBull = input(title="Plot Bullish", defval=true, group="Divergences")
+plotBear = input(title="Plot Bearish", defval=true, group="Divergences")
+plotHiddenBull = input(title="Plot Hidden Bullish", defval=false, group="Divergences")
+plotHiddenBear = input(title="Plot Hidden Bearish", defval=false, group="Divergences")
+
+bearColor = color.red
+bullColor = color.green
+hiddenBullColor = color.new(color.yellow,50)
+hiddenBearColor = color.new(color.yellow,50)
+textColor = color.white
+noneColor = color.new(color.white, 100)
+
+plFound = na(pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(pivothigh(osc, lbL, lbR)) ? false : true
+
+_inRange(cond) =>
+    bars = barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+//Get MA Values
+maA = input(150, minval=1, title="EMA 1", group="Moving Averages")
+maB = input(600, minval=1, title="EMA 2", group="Moving Averages")
+//Get MTF data
+dataA = ema(src, maA)
+dataB = ema(src, maB)
+
+trendBull = dataA > dataB //and signal < 0
+trendBear = dataA < dataB //and signal > 0
+
+//------------------------------------------------------------------------------
+// Regular Bullish
+
+// Osc: Higher Low
+oscHL = osc[lbR] > valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+
+// Price: Lower Low
+priceLL = low[lbR] < valuewhen(plFound, low[lbR], 1)
+
+bullCond = plotBull and priceLL and oscHL and plFound
+
+plot(plFound ? osc[lbR] : na,offset=-lbR,title="Regular Bullish",linewidth=2,color=(bullCond ? bullColor : noneColor),transp=0)
+plotshape(bullCond ? osc[lbR] : na,offset=-lbR,title="Regular Bullish Label",text="⬆",style=shape.labelup,location=location.absolute,color=bullColor,textcolor=textColor,transp=0)
+
+//------------------------------------------------------------------------------
+// Hidden Bullish
+
+// Osc: Lower Low
+oscLL = osc[lbR] < valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+
+// Price: Higher Low
+priceHL = low[lbR] > valuewhen(plFound, low[lbR], 1)
+
+hiddenBullCond = plotHiddenBull and priceHL and oscLL and plFound
+
+plot(plFound ? osc[lbR] : na,offset=-lbR,title="Hidden Bullish",linewidth=2,color=(hiddenBullCond ? hiddenBullColor : noneColor),transp=0)
+plotshape(hiddenBullCond ? osc[lbR] : na,offset=-lbR,title="Hidden Bullish Label",text="⬆H",style=shape.labelup,location=location.absolute,color=bullColor,textcolor=textColor,transp=0)
+
+//------------------------------------------------------------------------------
+// Regular Bearish
+
+// Osc: Lower High
+oscLH = osc[lbR] < valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+
+// Price: Higher High
+priceHH = high[lbR] > valuewhen(phFound, high[lbR], 1)
+
+bearCond = plotBear and priceHH and oscLH and phFound
+
+plot(phFound ? osc[lbR] : na, offset=-lbR, title="Regular Bearish", linewidth=2, color=(bearCond ? color.new(bearColor, trendBear ? 0 : 50) : noneColor))
+plotshape(bearCond ? osc[lbR] : na, offset=-lbR, title="Regular Bearish Label", text="⬇", style=shape.labeldown, location=location.absolute, color=color.new(bearColor,100), textcolor=color.new(bearColor, trendBear ? 0 : 50))
+
+//------------------------------------------------------------------------------
+// Hidden Bearish
+
+// Osc: Higher High
+oscHH = osc[lbR] > valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+
+// Price: Lower High
+priceLH = high[lbR] < valuewhen(phFound, high[lbR], 1)
+
+hiddenBearCond = plotHiddenBear and priceLH and oscHH and phFound
+
+plot(phFound ? osc[lbR] : na,offset=-lbR,title="Hidden Bearish",linewidth=2,color=(hiddenBearCond ? hiddenBearColor : noneColor),transp=0)
+plotshape(hiddenBearCond ? osc[lbR] : na,offset=-lbR,title="Hidden Bearish Label",text="⬇H",style=shape.labeldown,location=location.absolute,color=bearColor,textcolor=textColor,transp=0)
+
+plot(showCross and cross(osc, signal) and trendBear ? osc : na, style=plot.style_cross, color=color.silver, linewidth = 2)
+
+// Strategy
+stratGroup = "Strategy"
+barsBack = input(title="Bars back", type=input.integer, minval=0, maxval=100, defval=10, group=stratGroup, tooltip="")
+tpFactor = input(title="Take profit factor", type=input.float, minval=0, maxval=100, defval=1.5, group=stratGroup, tooltip="")
+
+buySignal = bullCond and trendBull
+sellSignal = bearCond and trendBear
+float slBuy = 0.0
+slBuy := strategy.position_size == 0 ? lowest(barsBack) : na(slBuy[1]) ? na : slBuy[1]
+float slSell = 0.0
+slSell := strategy.position_size == 0 ? highest(barsBack) : na(slSell[1]) ? na : slSell[1]
+
+entry_price = 0.0
+entry_price := buySignal ? close : sellSignal ? close : na(entry_price[1]) ? na : entry_price[1]
+
+tpBuy = entry_price + ((entry_price - slBuy) * tpFactor)
+tpSell = entry_price - ((slSell - entry_price) * tpFactor)
+
+
+strategy.entry("Long", true, when=buySignal)
+strategy.exit("Exit", "Long", stop=slBuy, limit=tpBuy)
+strategy.entry("Short", false, when=sellSignal)
+strategy.exit("Exit", "Short", stop=slSell, limit=tpSell)

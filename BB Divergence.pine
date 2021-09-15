@@ -1,0 +1,46 @@
+//
+//@author Alorse
+//@version=4
+strategy("Bollinger Bands Divergence [Alorse]", shorttitle="BB Divergence [Alorse]", overlay=true, pyramiding=1, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100) 
+
+// Bollinger Bands
+length = input(20, title="Period Bollindger Bands")
+mult = input(2.0, minval=0.001, maxval=5)
+src = input(title="Source", type=input.source, defval=close)
+timeStop = input(20, title="Time-based stop length")
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+offset = input(0, "Offset", type = input.integer, minval = -500, maxval = 500)
+
+buy = close > upper and upper[0] > upper[1] and lower[0] < lower[1] and close > open
+sell = close < lower and lower[0] < lower[1] and upper[0] > upper[1] and close < open
+
+pb1 = plot(upper, color=buy ? color.green : sell ? color.red : color.blue, title="Upper")
+pb2 = plot(lower, color=buy ? color.green :  sell ? color.red : color.blue, title="Lower")
+plot(buy ? upper : na, color.green, linewith=3)
+plot(sell ? lower : na, color.red, linewith=3)
+plot(basis, "Basis", color=color.new(color.orange, 75), offset=offset)
+fill(pb1, pb2, color=color.new(color.blue, 98), title="Background")
+
+//Strategy Conditions
+candleper = input(title="Candle % below the lower BB", type=input.float, minval=1, maxval=100, defval=30)
+tp = input(title="Take profit after (%)", type=input.float, minval=0, maxval=100, defval=5)
+//Strategy Condition
+candle_size = (high-low)
+buyzone = high - (candle_size*((100-candleper)/100))
+sellzone = low - (candle_size*((100-candleper)/100))
+
+// LONG
+isLong = strategy.position_size > 0
+strategy.entry("Long", true, when=buy and buyzone > upper)
+if isLong
+    strategy.close("Long", when=close < basis)
+
+// SHORT
+isShort = strategy.position_size < 0
+strategy.entry("Short", false, when=sell and sellzone < lower)
+if isShort
+    strategy.close("Short", when=close > basis)

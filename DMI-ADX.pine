@@ -1,0 +1,13 @@
+//@version=4
+study("Directional Movement Index by Alorse", shorttitle="DMI Alorse")
+len = input(14, minval=1, title="DI Length")
+lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
+keyLevel = input(23, title="Key level")
+[diplus,diminus,adx] = dmi(len, lensig)
+colo = diplus > diminus ? color.green : color.red
+plot(adx, color=colo, title="ADX", linewidth=2)
+hline(keyLevel)
+cond = adx > keyLevel
+bgcolor(cond ? color.silver : na)
+//var label1 = label.new(bar_index, low, text="Hello, world!" + tostring(adx))
+//label.set_xloc(label1, time, xloc.bar_time)

@@ -1,0 +1,87 @@
+//@version=4
+strategy(title="3 EMA/SMA + Cross Strategy [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// Set stop loss level with input options (optional)
+src = input(title="Source", type=input.source, defval=close)
+ma_type1 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 1 (Fast)")
+lenFast = input(10, minval=1, title="Periods", group="Moving Average 1 (Fast)")
+ma_type2 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 2 (Slow)")
+lenSlow = input(20, minval=1, title="Periods", group="Moving Average 2 (Slow)")
+ma_type3 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 3 (Tendence)")
+lenTend = input(100, minval=1, title="Periods", group="Moving Average 3 (Tendence)")
+
+// Calculate moving averages
+maFast = ma_type1 == "EMA" ? ema(src, lenFast) : sma(src, lenFast)
+maSlow = ma_type2 == "EMA" ? ema(src, lenSlow) : sma(src, lenSlow)
+maTend = ma_type3 == "EMA" ? ema(src, lenTend) : sma(src, lenTend)
+avg = round((lenFast+lenSlow)/2.4)
+maAvg = ma_type1 == "EMA" ? ema(src, avg) : sma(src, avg) // With Moving Average Type 1
+
+// Plot moving averages
+plot(maFast, color=color.purple, title="Fast MA")
+plot(maSlow, color=color.orange, title="Slow MA")
+//plot(maTend, color=color.white, title="Tendence MA", linewidth=2)
+plot(maAvg, color=color.new(color.silver, 75), title="Average MA")
+
+// Calculate trading conditions
+crossover  = crossover(maFast, maSlow)
+crossunder = crossunder(maFast, maAvg)
+lastCross = cross(maFast, maSlow)
+plot(crossover ? maFast : na, style=plot.style_cross, title="Entry cross", linewidth=2, color=color.white)
+plot(crossunder ? maAvg : na, style=plot.style_cross, title="Exit cross", linewidth=2, color=color.silver)
+
+showLong = input(true, title="Show Long entries", group="Strategy")
+showShort = input(false, title="Show Short entries", group="Strategy")
+crossBack = input(title="Check Cross in the last # candles", type=input.integer, defval=12, minval=4, group="Strategy")
+SP = input(title="Short Stop Loss (%)", type=input.float, minval=0.0, step=0.1, defval=3, group="Strategy") * 0.01
+
+wasCrossLong = false
+enterLong = false
+wasCrossShort = false
+enterShort = false
+for i = 1 to crossBack
+    if crossover(maFast[i], maSlow[i])
+        wasCrossLong := true
+    if crossunder(maFast[i], maSlow[i])
+        wasCrossShort := true
+for i = 1 to 4
+    if crossover(maFast[i], maSlow[i])
+        wasCrossLong := false
+    if crossunder(maFast[i], maSlow[i])
+        wasCrossShort := false
+if barssince(lastCross) <= 4
+    wasCrossLong := false
+    wasCrossShort := false
+
+// LONG
+isLong = strategy.position_size > 0
+if maFast >= maSlow and close[0] >= maFast and maFast >= low[1] and close[0] >= maTend and close[0] > open[0]
+    enterLong := true
+// Determine stop loss price
+longStopPrice = lowest(low, crossBack*2)
+//longStopPrice  = strategy.position_avg_price * (1 - SP)
+// Submit entry orders
+strategy.entry("Long", true, when=showLong and wasCrossLong and enterLong, alert_message='{"text": "{{ticker}}: Cruce de EMAs 10/20 en {{interval}} minutos 🟢"}')
+strategy.close("Long", when=crossunder, comment = "Close")
+// Submit exit orders based on calculated stop loss price
+if isLong
+    strategy.exit(id="Exit SL", stop=longStopPrice)
+// Plot stop loss values for confirmation
+// plot(showLong and isLong ? longStopPrice[1] : na, color=color.new(color.red, 30), style=plot.style_linebr, title="Long SL")
+
+// SHORT
+isShort = strategy.position_size < 0
+if maFast <= maSlow and close[0] <= maFast and maFast <= high[1] and close[0] <= maTend and close[0] < open[0]
+    enterShort := true
+// Determine stop loss price
+shortStopPrice = highest(high, crossBack*2)
+// shortStopPrice = strategy.position_avg_price * (1 + SP)
+// Submit entry orders
+strategy.entry("Short", false, when=showShort and wasCrossShort and enterShort, alert_message='{"text": "{{ticker}}: Cruce de EMAs 10/20 en {{interval}} minutos 🔴"}')
+strategy.close("Short", when=crossover(maFast, maSlow))
+
+// Submit exit orders based on calculated stop loss price
+if isShort
+    strategy.exit(id="Exit", stop=shortStopPrice)
+// Plot stop loss values for confirmation
+plot(showShort and isShort ? shortStopPrice[1] : na, color=color.new(color.red, 30), style=plot.style_linebr, title="Short SL")

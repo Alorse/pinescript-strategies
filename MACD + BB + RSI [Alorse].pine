@@ -1,0 +1,68 @@
+//
+//@author Alorse
+//@version=4
+strategy("MACD + BB + RSI [Alorse]", shorttitle="BB + MACD + RSI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+txtVer = "1.0.1"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+src = input(title="Source", type=input.source, defval=close)
+
+// MACD
+fast_length = input(title="Fast Length", type=input.integer, defval=12, group="MACD")
+slow_length = input(title="Slow Length", type=input.integer, defval=26, group="MACD")
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group="MACD")
+sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+fast_ma = sma_source == "SMA" ? sma(src, fast_length) : ema(src, fast_length)
+slow_ma = sma_source == "SMA" ? sma(src, slow_length) : ema(src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_length)
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+// RSI
+rsiGroup = "RSI"
+lenRSI = input(14, title="Length", minval=1, group=rsiGroup)
+// lessThan = input(50, title="Less than", minval=1 , maxval=100, group=rsiGroup)
+RSI = rsi(src, lenRSI)
+
+// Strategy Conditions
+buy = crossover(macd, signal) and RSI < 50 and close < basis
+sell = RSI > 70 and close > upper
+
+// Stop Loss
+slGroup = "Stop Loss"
+useSL = input(false, title="╔══════   Enable   ══════╗", group=slGroup, tooltip="If you are using this strategy for Scalping or Futures market, we do not recommend using Stop Loss.")
+SLbased = input(title="Based on", type=input.string, defval="Percent", options=["ATR", "Percent"], group=slGroup, tooltip="ATR: Average True Range\nPercent: eg. 5%.")
+multiATR = input(10.0, title="ATR   Mult", type=input.float, group=slGroup, inline="atr")
+lengthATR = input(14, title="Length", type=input.integer, group=slGroup, inline="atr")
+SLPercent = input(10, title="Percent", type=input.float, group=slGroup) * 0.01
+
+longStop = 0.0
+shortStop = 0.0
+
+if SLbased == "ATR"
+    longStop := valuewhen(buy, low, 0) - (valuewhen(buy, rma(tr(true), lengthATR), 0) * multiATR)
+    longStopPrev = nz(longStop[1], longStop)
+    longStop := close[1] > longStopPrev ? max(longStop, longStopPrev) : longStop
+
+    shortStop := (valuewhen(sell, rma(tr(true), lengthATR), 0) * multiATR) + valuewhen(sell, high, 0)
+    shortStopPrev = nz(shortStop[1], shortStop)
+    shortStop := close[1] > shortStopPrev ? max(shortStop, shortStopPrev) : shortStop
+if SLbased == "Percent"
+    longStop  := strategy.position_avg_price * (1 - SLPercent)
+    shortStop := strategy.position_avg_price * (1 + SLPercent)
+
+strategy.entry("Long", true, when=buy)
+strategy.close("Long", when=sell, comment="Exit")
+
+if useSL
+    strategy.exit("Stop Loss", "Long", stop=longStop)

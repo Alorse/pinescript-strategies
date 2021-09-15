@@ -1,0 +1,94 @@
+//@version=4
+strategy(title="3 EMA/SMA + Cross Strategy [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+// STEP 1:
+// Set stop loss level with input options (optional)
+src = input(title="Source", type=input.source, defval=close)
+SP = input(title="Short Stop Loss (%)", type=input.float, minval=0.0, step=0.1, defval=99) * 0.01
+lenFast = input(10, minval=1, title="Fast EMA")
+lenSlow = input(20, minval=1, title="Slow EMA")
+lenTend = input(100, minval=1, title="Tendence EMA")
+
+// Calculate moving averages
+fastEMA = ema(src, lenFast)
+slowEMA = ema(src, lenSlow)
+tendEMA = ema(src, lenTend)
+
+// Plot moving averages
+plot(fastEMA, color=#c643dc)
+plot(slowEMA, color=color.orange)
+plot(tendEMA, color=color.white)
+
+// Calculate trading conditions
+crossover  = crossover(fastEMA, slowEMA)
+crossunder = crossunder(fastEMA, slowEMA)
+plot(crossover or crossunder ? fastEMA : na, style=plot.style_cross, title="Cross", linewidth=2, color=color.white)
+
+crossBack = input(title="Check Cross in the last # candles", type=input.integer, defval=10, group="Strategy")
+
+// LONG
+wasCrossLong = false
+enterLong = false
+for i = 1 to crossBack
+    if crossover(fastEMA[i], slowEMA[i])
+        wasCrossLong := true
+        break
+
+// numBars = 0
+// if fastEMA > slowEMA
+//     numBars := numBars[1] + 1
+// else
+//     numBars := 0
+
+// inCross = barssince(crossover(fastEMA, slowEMA))
+// inCross := inCross > crossBack ? crossBack : inCross
+// count = 0
+// for i = 1 to inCross
+//     if low[i] <= fastEMA[i]
+//         count := count + 1
+
+if close[0] >= fastEMA and low[1] <= fastEMA and tendEMA <= close[0]
+    enterLong := true
+
+// SHORT
+// wasCrossShort = false
+// enterShort = false
+// for i = 1 to crossBack
+//     if crossunder(fastEMA[i], slowEMA[i])
+//         wasCrossShort := true
+//         break
+
+// count := 0
+// for i = 1 to 5
+//     if high[i] >= fastEMA[i]
+//         count += 1
+
+// if close[0] <= fastEMA and high[1] >= fastEMA and tendEMA >= close[0] //and count < (inCross/2)
+//     enterShort := true
+
+// STEP 2:
+// Determine stop loss price
+longStopPrice  = strategy.position_avg_price * (1 - SP)
+shortStopPrice = strategy.position_avg_price * (1 + SP)
+
+// Plot stop loss values for confirmation
+// plot((strategy.position_size > 0) ? longStopPrice : na,
+//      color=color.new(color.red, 30), style=plot.style_linebr,
+//      linewidth=1, title="Long Stop Loss")
+// plot((strategy.position_size < 0) ? shortStopPrice : na,
+//      color=color.new(color.red, 30), style=plot.style_linebr,
+//      linewidth=1, title="Short Stop Loss")
+
+// Submit entry orders
+strategy.entry("Long", true, when=wasCrossLong and enterLong)
+strategy.close("Long", when=crossunder(fastEMA, slowEMA))
+// strategy.entry("Short", false, when=wasCrossShort and enterShort)
+// strategy.close("Short", when=crossover(fastEMA, slowEMA))
+
+// STEP 3:
+// Submit exit orders based on calculated stop loss price
+if (strategy.position_size > 0)
+    strategy.exit(id="Exit", stop=longStopPrice)
+
+if (strategy.position_size < 0)
+    strategy.exit(id="Exit", stop=shortStopPrice)

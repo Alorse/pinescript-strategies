@@ -1,0 +1,23 @@
+//@version=4
+study(title="3 EMA/SMA + Cross [Alorse]", shorttitle="3 MA + Cross [Alorse]", overlay=true)
+
+src = input(title="Source", type=input.source, defval=close)
+ma_type1 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 1 (Fast)")
+lenFast = input(10, minval=1, title="Periods", group="Moving Average 1 (Fast)")
+ma_type2 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 2 (Slow)")
+lenSlow = input(20, minval=1, title="Periods", group="Moving Average 2 (Slow)")
+ma_type3 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 3 (Tendence)")
+lenTend = input(100, minval=1, title="Periods", group="Moving Average 3 (Tendence)")
+
+// Calculate moving averages
+maFast = ma_type1 == "EMA" ? ema(src, lenFast) : sma(src, lenFast)
+maSlow = ma_type2 == "EMA" ? ema(src, lenSlow) : sma(src, lenSlow)
+maTend = ma_type3 == "EMA" ? ema(src, lenTend) : sma(src, lenTend)
+
+// Plot moving averages
+plot(maFast, color=color.purple, title="Fast MA")
+plot(maSlow, color=color.orange, title="Slow MA")
+plot(maTend, color=color.white, title="Tendence MA", linewidth=2)
+
+// Calculate trading conditions
+plot(cross(maFast, maSlow) ? maFast : na, style=plot.style_cross, title="Cross", linewidth=2, color=color.white)

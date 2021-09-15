@@ -1,0 +1,39 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+//@version=4
+strategy(shorttitle='MACD + DMI [Alorse]',title='MACD + DMI [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+// Works better on 3h, 1h, 2h, 4h
+// DMI and MACD inputs and calculations
+
+[pos_dm, neg_dm, avg_dm] = dmi(14, 14)
+[macd, macd_signal, macd_histogram] = macd(close, 12, 26, 9)
+
+
+length = input(20, "Length", minval = 2)
+src = input(close, "Source")
+factor = input(2.0, "vStop Multiplier", minval = 0.25, step = 0.25)
+volStop(src, atrlen, atrfactor) =>
+    var max     = src
+    var min     = src
+    var uptrend = true
+    var stop    = 0.0
+    atrM        = nz(atr(atrlen) * atrfactor, tr)
+    max         := max(max, src)
+    min         := min(min, src)
+    stop        := nz(uptrend ? max(stop, max - atrM) : min(stop, min + atrM), src)
+    uptrend     := src - stop >= 0.0
+    if uptrend != nz(uptrend[1], true)
+        max    := src
+        min    := src
+        stop   := uptrend ? max - atrM : min + atrM
+    [stop, uptrend]
+
+[vStop, uptrend] = volStop(src, length, factor)
+
+tales = crossunder(macd, macd_signal) and pos_dm > neg_dm ? false : crossunder(macd, macd_signal) and pos_dm < neg_dm ? true : false
+closeLong = tales or crossunder(close, vStop)
+
+//Entry 
+strategy.entry("long",true, when=crossover(macd, macd_signal) and pos_dm > neg_dm)
+//Exit
+strategy.close("long", when=closeLong)

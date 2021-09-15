@@ -1,0 +1,27 @@
+//
+//@author Alorse
+//@version=4
+study(title="3 Multi Timeframe EMA/SMA", shorttitle="3 MTF EMA/SMA", overlay=true)
+
+// SMA or EMA
+mtf_type = input(title="MultiTimeframe MA Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="MTF MA Type")
+
+//Get MA Values
+resA = input(title='Timeframe', type=input.resolution, defval="15", group="Moving Average 1")
+maA = input(title='MA Periods', minval=1, defval=50, group="Moving Average 1")
+resB = input(title='Timeframe', type=input.resolution, defval="60", group="Moving Average 2")
+maB = input(title='MA Periods', minval=1, defval=50, group="Moving Average 2")
+resC = input(title='Timeframe', type=input.resolution, defval="240", group="Moving Average 3")
+maC = input(title='MA Periods', minval=1, defval=50, group="Moving Average 3")
+
+//Set resolutions
+
+//get data
+dataA = security(syminfo.tickerid, resA, mtf_type == "EMA" ? ema(close, maA) : sma(close, maA))
+dataB = security(syminfo.tickerid, resB, mtf_type == "EMA" ? ema(close, maB) : sma(close, maB))
+dataC = security(syminfo.tickerid, resC, mtf_type == "EMA" ? ema(close, maC) : sma(close, maC))
+
+//Plotting
+plot(dataA, color=color.purple, linewidth=1)
+plot(dataB, color=color.white, linewidth=1)
+plot(dataC, color=color.green, linewidth=1, color=na)

@@ -1,0 +1,42 @@
+//
+//@author Alorse
+//@version=4
+strategy("StochRSI + Supertrend Strategy [Alorse]", shorttitle="StochRSI+ST STRTG [Alorse]", overlay=true, pyramiding=0, initial_capital=1000, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+smoothK = input(3, "K", minval=1)
+smoothD = input(3, "D", minval=1)
+lengthRSI = input(14, "RSI Length", minval=1)
+lengthStoch = input(14, "Stochastic Length", minval=1)
+src = input(close, title="RSI Source")
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+
+// MA
+ma_type = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Tendence Moving Average")
+lenTend = input(200, minval=1, title="Periods", group="Tendence Moving Average")
+maTend = ma_type == "EMA" ? ema(src, lenTend) : sma(src, lenTend)
+plot(maTend, color=color.white, title="Tendence MA", linewidth=2)
+
+// SUPERTREND
+atrPeriod2 = input(11, "ATR Length", group="SUPERTREND 2")
+factor2 = input(2, "Factor", group="SUPERTREND 2")
+[supertrend2, direction2] = supertrend(factor2, atrPeriod2)
+plot(direction2 < 0 ? supertrend2 : na, "Up Trend 2", color = color.green, style=plot.style_linebr)
+plot(direction2 < 0 ? na : supertrend2, "Down Trend 2", color = color.red, style=plot.style_linebr)
+
+// STRATEGY
+showShort = input(false, title="Show Short entries", group="Strategy")
+
+buy = close > maTend and k < 20 and crossover(k, d) and direction2 < 0
+sell = close < maTend and k > 80 and crossunder(k, d) and direction2 > 0
+closeBuy = k > 80 and crossunder(k, d)
+closeSell = k < 20 and crossover(k, d)
+
+// LONG
+strategy.entry("Long", true, when=buy)
+strategy.close("Long", when=closeBuy)
+
+// SHORT
+if showShort
+    strategy.entry("Short", false, when=sell)
+    strategy.close("Short", when=closeSell)

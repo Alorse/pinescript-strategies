@@ -1,0 +1,81 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+//@author Alorse
+//@version=4
+strategy("MTF Bollindger Bands Strategy [Alorse]", shorttitle="MTF BB Strategy [Alorse]", overlay=true, pyramiding=0, initial_capital=1000, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+txtVer = "1.0.3"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+res = input(title="Multi Timeframe", type=input.resolution, defval="60", tooltip="Timeframe recommended  is 5 minutes, if you want to use the strategy in higher timeframes, please also increase Multi Timeframe.\nEg: If you want to use the strategy in 1 hour, put the Multi Timeframe in 4 hours.")
+
+// MTF Bollinger Bands
+bbGroup = "MTF Bollindger Bands"
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+mtfBasis = security(syminfo.tickerid, res, basis)
+mtfUpper = security(syminfo.tickerid, res, upper)
+mtfLower = security(syminfo.tickerid, res, lower)
+
+pb1 = plot(mtfUpper, color=color.new(color.teal, 50), title="Upper")
+pb2 = plot(mtfLower, color=color.new(color.teal, 50), title="Lower")
+fill(pb1, pb2, color=color.new(color.teal, 98), title="Background")
+plot(mtfBasis, "Basis", color=color.new(color.orange, 60))
+
+// MTF EMA
+maGroup = "MTF Moving Average Filter"
+hasMa = input(false, title="╔══════   Use MA   ══════╗", group=maGroup, tooltip="If Moving Average Filter is enabled, strategy only shows Long entries when the price is above the MA and Short entries when the price is below the MA.")
+mtfType = input(title="MultiTimeframe MA Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group=maGroup)
+emaLen = input(title='MA Periods', minval=1, defval=200, group=maGroup)
+ema = security(syminfo.tickerid, res, mtfType == "EMA" ? ema(close, emaLen) : sma(close, emaLen))
+
+plot(hasMa ? ema : na, title="Moving Average", linewidth=1, color=color.new(color.blue, 10))
+buyMaFilter = hasMa ? close > ema : true
+sellMaFilter = hasMa ? close < ema : true
+
+//Strategy
+stratGroup = "Strategy"
+showLong = input(true, title="Long entries", group=stratGroup)
+showShort = input(false, title="Short entries", group=stratGroup)
+
+buy = close < mtfLower and buyMaFilter
+sell = close > mtfUpper and sellMaFilter
+
+// Stop Loss
+slGroup = "Stop Loss"
+useSL = input(true, title="╔══════   Enable   ══════╗", group=slGroup, tooltip="If you are using this strategy for Scalping or Futures market, we do not recommend using Stop Loss.")
+SLbased = input(title="Based on", type=input.string, defval="Percent", options=["ATR", "Percent"], group=slGroup, tooltip="ATR: Average True Range\nPercent: eg. 5%.")
+multiATR = input(6.0, title="ATR   Mult", type=input.float, group=slGroup, inline="atr")
+lengthATR = input(14, title="Length", type=input.integer, group=slGroup, inline="atr")
+SLPercent = input(6, title="Percent", type=input.float, group=slGroup) * 0.01
+
+longStop = 0.0
+shortStop = 0.0
+
+if SLbased == "ATR"
+    longStop := valuewhen(buy, low, 0) - (valuewhen(buy, rma(tr(true), lengthATR), 0) * multiATR)
+    longStopPrev = nz(longStop[1], longStop)
+    longStop := close[1] > longStopPrev ? max(longStop, longStopPrev) : longStop
+
+    shortStop := (valuewhen(sell, rma(tr(true), lengthATR), 0) * multiATR) + valuewhen(sell, high, 0)
+    shortStopPrev = nz(shortStop[1], shortStop)
+    shortStop := close[1] > shortStopPrev ? max(shortStop, shortStopPrev) : shortStop
+if SLbased == "Percent"
+    longStop  := strategy.position_avg_price * (1 - SLPercent)
+    shortStop := strategy.position_avg_price * (1 + SLPercent)
+
+if showLong
+    strategy.entry("Long", true, when=buy)
+    strategy.close("Long", when=close > mtfUpper)
+    if useSL
+        strategy.exit("SL", "Long", stop=longStop)
+if showShort
+    strategy.entry("Short", false, when=sell)
+    strategy.close("Short", when=close < mtfLower)
+    if useSL
+        strategy.exit("SL", "Short", stop=shortStop)

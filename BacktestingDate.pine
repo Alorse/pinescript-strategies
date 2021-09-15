@@ -1,0 +1,40 @@
+//@version=4
+strategy(title="Only trade between two dates", overlay=true)
+
+// STEP 1:
+// Make input options that configure backtest date range
+startDate = input(title="Day", type=input.integer, defval=1, minval=1, maxval=31, group="Backtesting starts")
+startMonth = input(title="Month", type=input.integer, defval=7, minval=1, maxval=12, group="Backtesting starts")
+startYear = input(title="Year", type=input.integer, defval=2021, minval=1800, maxval=2100, group="Backtesting starts")
+
+endDate = input(title="Day", type=input.integer, defval=21, minval=1, maxval=31, group="Backtesting ends")
+endMonth = input(title="Month", type=input.integer, defval=12, minval=1, maxval=12, group="Backtesting ends")
+endYear = input(title="Year", type=input.integer, defval=2022, minval=1800, maxval=2100, group="Backtesting ends")
+
+// STEP 2:
+// Look if the close time of the current bar
+// falls inside the date range
+inDateRange = (time >= timestamp(syminfo.timezone, startYear, startMonth, startDate, 0, 0))
+    and (time < timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0))
+
+// Calculate strategy values
+emaValue = ema(close, 20)
+
+plot(series=emaValue, color=color.teal, linewidth=2)
+
+// Set trade entry conditions
+enterLong  = (close > close[1]) and crossover(close, emaValue)
+enterShort = (close < close[1]) and crossunder(close, emaValue)
+
+// STEP 3:
+// Submit entry orders, but only when bar is inside date range
+if (inDateRange and enterLong)
+    strategy.entry(id="EL", long=true)
+
+if (inDateRange and enterShort)
+    strategy.entry(id="ES", long=false)
+
+// STEP 4:
+// Exit open market position when date range ends
+if (not inDateRange)
+    strategy.close_all()

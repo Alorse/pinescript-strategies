@@ -1,0 +1,28 @@
+//@version=4
+study("PivotHighLow", overlay=true)
+leftBars = input(10)
+rightBars = input(10)
+ph = pivothigh(close, leftBars, rightBars)
+plot(ph, style=plot.style_line, linewidth=1, color= color.yellow, offset=-rightBars)
+plot(ph, style=plot.style_cross, linewidth=3, color= color.yellow, offset=-rightBars)
+pl = pivotlow(close, leftBars, rightBars)
+plot(pl, style=plot.style_line, linewidth=1, color= color.white, offset=-rightBars)
+plot(pl, style=plot.style_cross, linewidth=3, color= color.white, offset=-rightBars)
+
+//@version=3
+study(title="Better MACD", shorttitle="Better MACD")
+source = close
+fastLength = input(12, minval=1), slowLength=input(26,minval=1)
+signalLength=input(9,minval=1)
+fastMA = ema(source, fastLength)
+slowMA = ema(source, slowLength)
+macd = fastMA - slowMA
+signal = ema(macd, signalLength)
+hist = macd - signal
+histcolor = abs(hist[1]) < abs(hist) ? red:white
+
+hline(0,color=yellow, linestyle=dotted,title="Zero line")
+plot(hist, color=histcolor, style=columns,transp =50, title="Histogram")
+plot(signal, color=orange,linewidth=2, transp = 0, title="Signal")
+plot(macd, color=aqua, linewidth=2, transp = 0, title="MACD")
+plot(cross(macd,signal)? macd:na, style=circles,linewidth=3,transp=0,title="Crossing",color=white)
