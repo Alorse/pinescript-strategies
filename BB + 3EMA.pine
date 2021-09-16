@@ -1,12 +1,17 @@
 //
 //@author Alorse
 //@version=4
-study(title="Simple Bollinger Bands + 3 EMA/SMA", shorttitle="BB + 3 EMA/SMA", overlay=true)
-src = input(title="Source", type=input.source, defval=close, group="Bollindger Bands")
+study(title="Simple Bollinger Bands + 3 EMA/SMA [Alorse]", shorttitle="BB + 3 EMA/SMA [Alorse]", overlay=true)
+txtVer = "1.0.2"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+
+src = input(title="Source", type=input.source, defval=close)
 
 // Bollinger Bands
-length = input(20, title="Period Bollindger Bands", group="Bollindger Bands")
-mult = input(2.0, minval=0.001, maxval=5, group="Bollindger Bands")
+bbGroup = "Bollindger Bands"
+isBB = input(true, title="╔═════ Show Bollinger Bands ═════╗", group=bbGroup, tooltip="If you don't want to see Bollinger Bands")
+length = input(20, title="Period Bollindger Bands", group=bbGroup)
+mult = input(2.0, minval=0.001, maxval=5, group=bbGroup)
 
 basis = sma(src, length)
 dev = mult * stdev(src, length)
@@ -14,10 +19,10 @@ upper = basis + dev
 lower = basis - dev
 offset = input(0, "Offset", type = input.integer, minval = -500, maxval = 500)
 
-plot(basis, "Basis", color=color.new(color.orange, 75), offset = offset)
-pb1 = plot(upper, color=color.new(color.lime, 75), title="Upper")
-pb2 = plot(lower, color=color.new(color.lime, 75), title="Lower")
-fill(pb1, pb2, color=color.new(color.lime, 100), title="Background")
+plot(isBB ? basis : na, "Basis", color=color.new(color.orange, 75), offset = offset)
+pb1 = plot(isBB ? upper : na, color=color.new(color.lime, 75), title="Upper")
+pb2 = plot(isBB ? lower : na, color=color.new(color.lime, 75), title="Lower")
+fill(pb1, pb2, color=color.new(color.lime, 99), title="Background")
 
 //EMA
 ma_type = input(title="Moving Average Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Averages")
