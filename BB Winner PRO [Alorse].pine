@@ -90,6 +90,7 @@ SLbased = input(title="Based on", type=input.string, defval="Percent", options=[
 multiATR = input(7.0, title="ATR   Mult", type=input.float, group=slGroup, inline="atr")
 lengthATR = input(14, title="Length", type=input.integer, group=slGroup, inline="atr")
 SLPercent = input(7, title="Percent", type=input.float, group=slGroup) * 0.01
+plotSL = input(true, title="Show SL", group=slGroup)
 
 longStop = 0.0
 shortStop = 0.0
@@ -107,19 +108,13 @@ if SLbased == "Percent"
     shortStop := strategy.position_avg_price * (1 + SLPercent)
 
 // Print Stop Loss
-// plotshape(useSL and strategy.position_size > 0 ? longStop : na, title = "Long Stop Loss", color=color.green, location=location.absolute)
-// plotshape(useSL and strategy.position_size < 0 ? shortStop : na, title = "Short Stop Loss", color=color.red, location=location.absolute)
-
-// Backtesting
-// btGroup = "Backtesting"
-// startTime = input(title="Start time", type=input.time, defval=timestamp("Feb 01 2020 23:59:59"), group=btGroup)
-// endTime = input(title="End time", type=input.time, defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
-//inDateRange = time >= startTime and time <= endTime
+plotshape(plotSL and useSL and strategy.position_size > 0 ? longStop : na, title = "Long Stop Loss", color=color.green, location=location.absolute)
+plotshape(plotSL and useSL and strategy.position_size < 0 ? shortStop : na, title = "Short Stop Loss", color=color.red, location=location.absolute)
 
 
 buyExit = RSI < 70 and close < entry_price and buyzone > upper ? false : buyzone > upper
 sellExit = RSI > 30 and close > entry_price and sellzone < lower ? false : sellzone < lower
-if showLong //and inDateRange
+if showLong
     strategy.entry("Long", true, when=buy)
     if closeLongEarly and useSL
         strategy.exit("Exit", "Long", limit=upper, stop=longStop)
@@ -127,7 +122,7 @@ if showLong //and inDateRange
         strategy.exit("Exit", "Long", limit=upper)
     if not showShort
         strategy.close("Long", when=buyExit, comment="Exit")
-if showShort //and inDateRange
+if showShort
     strategy.entry("Short", false, when=sell)
     if closeShortEarly and useSL
         strategy.exit("Exit", "Short", limit=lower, stop=shortStop)
