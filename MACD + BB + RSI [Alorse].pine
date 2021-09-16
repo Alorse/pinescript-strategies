@@ -1,10 +1,10 @@
 //
 //@author Alorse
 //@version=4
-strategy("MACD + BB + RSI [Alorse]", shorttitle="BB + MACD + RSI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
+strategy("MACD + BB + RSI [Alorse]", shorttitle="MACD + BB + RSI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
 
 txtVer = "1.0.1"
-version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.\n\nEntry conditions:\nThe MACD line crosses over the signal line.\nRSI less than 50.\nPrice below the BB baseline.\n\nExit conditions:\nRSI greater than 70.\nClosing price higher than upper BB.")
 src = input(title="Source", type=input.source, defval=close)
 
 // MACD
