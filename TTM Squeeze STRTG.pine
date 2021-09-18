@@ -1,8 +1,6 @@
 //@version=4
-// strategy(title="TTM Squeeze Alorse", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
-study(title="TTM Squeeze Alorse", overlay=true)
+strategy(title="TTM Squeeze [Alorse]", overlay=false, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
 length = input(title="Length", type=input.integer, defval=20, minval=0)
-SP = input(title="Short Stop Loss (%)", type=input.float, minval=0.0, step=0.1, defval=10) * 0.01
 bband(length, mult) =>
 	sma(close, length) + mult * stdev(close, length)
 keltner(length, mult) =>
@@ -11,24 +9,20 @@ keltner(length, mult) =>
 e1 = (highest(high, length) + lowest(low, length)) / 2 + sma(close, length)
 osc = linreg(close - e1 / 2, length, 0)
 diff = bband(length, 2) - keltner(length, 1)
-// 1 = cold: price > 0
-// 2 = hot: price < 0 Sell
-// 3 = hot: price < Buy
-// 4 = cold: price > 0
-osc_status = osc[1] < osc[0] ? osc[0] >= 0 ? 1 : 3 : osc[0] >= 0 ? 2 : 4
+
 osc_color = osc[1] < osc[0] ? osc[0] >= 0 ? color.lime : color.maroon : osc[0] >= 0 ? color.green : color.red
 mid_color = diff >= 0 ? color.white : color.black
 
+len = input(14, minval=1, title="Length", group="RSI")
+src = input(close, "Source", type = input.source, group="RSI")
+rsi = rsi(src, len)
+
+// Strategy
+buy = osc < 0 and osc[1] < osc[0] and osc[2] < osc[0] and rsi < 50
+sell = osc > 0 and osc[1] > osc[0] and osc[2] > osc[0]
+strategy.entry("Long", strategy.long, when=buy)
+strategy.close("Long", when=sell)
+// strategy.entry("Short", strategy.short, when=osc > 0 and not osc_status)
 
 plot(osc, color=osc_color, style=plot.style_area, linewidth=1)
 plot(0, color=mid_color, style=plot.style_circles, linewidth=1)
-
-
-// sell1 = osc[0] > osc[1] ? osc[0] >= 0 ? false : false : osc[0] >= 0 ? true : false
-// buy1 = osc[0] > osc[1] ? osc[0] >= 0 ? false : true : osc[0] >= 0 ? false : false
-// strategy.entry("Long", true, when=buy1)
-// strategy.close("Long", when=sell1)
-
-// longStopPrice  = strategy.position_avg_price * (1 - SP)
-// if (strategy.position_size > 0)
-//     strategy.exit(id="Exit", stop=longStopPrice)
