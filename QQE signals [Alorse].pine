@@ -1,0 +1,57 @@
+//@version=4
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © colinmck
+
+strategy("QQE signals [Alorse]", shorttitle="QQE signals [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+RSI_Period = input(14, title='RSI Length')
+SF = input(5, title='RSI Smoothing')
+QQE = input(4.238, title='Fast QQE Factor')
+ThreshHold = input(10, title="Thresh-hold")
+
+src = close
+Wilders_Period = RSI_Period * 2 - 1
+
+Rsi = rsi(src, RSI_Period)
+RsiMa = ema(Rsi, SF)
+AtrRsi = abs(RsiMa[1] - RsiMa)
+MaAtrRsi = ema(AtrRsi, Wilders_Period)
+dar = ema(MaAtrRsi, Wilders_Period) * QQE
+
+longband = 0.0
+shortband = 0.0
+trend = 0
+
+DeltaFastAtrRsi = dar
+RSIndex = RsiMa
+newshortband = RSIndex + DeltaFastAtrRsi
+newlongband = RSIndex - DeltaFastAtrRsi
+longband := RSIndex[1] > longband[1] and RSIndex > longband[1] ? max(longband[1], newlongband) : newlongband
+shortband := RSIndex[1] < shortband[1] and RSIndex < shortband[1] ? min(shortband[1], newshortband) : newshortband
+cross_1 = cross(longband[1], RSIndex)
+trend := cross(RSIndex, shortband[1]) ? 1 : cross_1 ? -1 : nz(trend[1], 1)
+FastAtrRsiTL = trend == 1 ? longband : shortband
+
+// Find all the QQE Crosses
+
+QQExlong = 0
+QQExlong := nz(QQExlong[1])
+QQExshort = 0
+QQExshort := nz(QQExshort[1])
+QQExlong := FastAtrRsiTL < RSIndex ? QQExlong + 1 : 0
+QQExshort := FastAtrRsiTL > RSIndex ? QQExshort + 1 : 0
+
+//Conditions
+
+qqeLong = QQExlong == 1 ? FastAtrRsiTL[1] - 50 : na
+qqeShort = QQExshort == 1 ? FastAtrRsiTL[1] - 50 : na
+
+// Plotting
+
+// plotshape(qqeLong, title="QQE long", text="Long", textcolor=color.white, style=shape.labelup, location=location.belowbar, color=color.green, transp=0, size=size.tiny)
+// plotshape(qqeShort, title="QQE short", text="Short", textcolor=color.white, style=shape.labeldown, location=location.abovebar, color=color.red, transp=0, size=size.tiny)
+
+// Alerts
+strategy.entry("Long", true, when=qqeLong)
+// strategy.entry("Short", false, when=qqeShort)
+strategy.close("Long", when=qqeShort)
