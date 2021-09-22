@@ -3,7 +3,7 @@
 //@version=4
 strategy("MACD + BB + RSI [Alorse]", shorttitle="MACD + BB + RSI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
 
-txtVer = "1.0.1"
+txtVer = "1.0.3"
 version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.\n\nEntry conditions:\nThe MACD line crosses over the signal line.\nRSI less than 50.\nPrice below the BB baseline.\n\nExit conditions:\nRSI greater than 70.\nClosing price higher than upper BB.")
 src = input(title="Source", type=input.source, defval=close)
 
@@ -20,18 +20,24 @@ signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_lengt
 
 // Bollinger Bands
 bbGroup = "Bollindger Bands"
+isBB = input(true, title="╔═════ Show Bollinger Bands ═════╗", group=bbGroup, tooltip="If you don't want to see Bollinger Bands")
 length = input(20, title="Length", group=bbGroup)
 mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+offset = input(0, "Offset", type = input.integer, minval = -500, maxval = 500, group=bbGroup)
 
 basis = sma(src, length)
 dev = mult * stdev(src, length)
 upper = basis + dev
 lower = basis - dev
 
+plot(isBB ? basis : na, "Basis", color=color.new(color.orange, 75), offset = offset)
+pb1 = plot(isBB ? upper : na, color=color.new(color.lime, 75), title="Upper")
+pb2 = plot(isBB ? lower : na, color=color.new(color.lime, 75), title="Lower")
+fill(pb1, pb2, color=color.new(color.lime, 99), title="Background")
+
 // RSI
 rsiGroup = "RSI"
 lenRSI = input(14, title="Length", minval=1, group=rsiGroup)
-// lessThan = input(50, title="Less than", minval=1 , maxval=100, group=rsiGroup)
 RSI = rsi(src, lenRSI)
 
 // Strategy Conditions
