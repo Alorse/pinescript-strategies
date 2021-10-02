@@ -1,7 +1,7 @@
 //@version=4
 strategy("Directional Movement Index Winner [Alorse]", shorttitle="DMI Winner [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
 
-txtVer = "0.0.8"
+txtVer = "0.0.9"
 version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.\n\nEntry conditions:\n")
 src = input(title="Source", type=input.source, defval=close)
 
@@ -32,14 +32,9 @@ shortCond = diplus > diminus and diplus[1] > diminus[1] and diplus[2] > diminus[
 longEntry = shortCond and adx > keyLevel and buyMaFilter
 shortEntry = longCond and adx > keyLevel and sellMaFilter
 
-bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
-entry_price = valuewhen(bought, open, 0)
-
-shortEntry := close < entry_price ? longCond and sellMaFilter : shortEntry
-
 if showLong and not showShort
     strategy.entry("Long", true, when=longEntry)
-    strategy.close("Long", when=shortEntry, comment=tostring(entry_price))
+    strategy.close("Long", when=shortEntry)
 if not showLong and showShort
     strategy.entry("Short", false, when=shortEntry)
     strategy.close("Short", when=longEntry)
@@ -47,3 +42,13 @@ if showLong and showShort
     strategy.entry("Long", true, when=longEntry)
     strategy.entry("Short", false, when=shortEntry)
 
+// Stop Loss
+slGroup = "Stop Loss"
+useSL = input(false, title="╔══════   Enable   ══════╗", group=slGroup)
+SLPercent = input(10, title="Percent", type=input.float, group=slGroup) * 0.01
+
+longStop  = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+if useSL
+    strategy.exit("Stop Loss", "Long", stop=longStop)

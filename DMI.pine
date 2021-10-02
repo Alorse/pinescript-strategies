@@ -1,16 +1,15 @@
 //@version=4
-study("Directional Movement Index [Alorse]", shorttitle="DMI [Alorse]")
+study("DMI Trade Zone [Alorse]", shorttitle="DMI TZ [Alorse]")
 len = input(14, minval=1, title="DI Length")
 lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
 keyLevel = input(23, title="key level")
 pl = input(false, title="Plot DI- & DI+")
 [diplus,diminus,adx] = dmi(len, lensig)
-colo = diplus > diminus ? color.green : color.red
+cond = diplus > diminus
+colo = cond ? color.green : color.red
 plot(adx, color=color.new(color.white, 50), title="Shadow", linewidth=3)
 plot(adx, color=colo, title="ADX", linewidth=2)
 plot(pl ? diminus: na, color=color.red, title="DI-")
 plot(pl ? diplus : na, color=color.green, title="DI+")
 hline(keyLevel)
-// cond = adx > keyLevel
-cond = diplus > diminus
 bgcolor(cond ? color.new(color.silver, 92) : na)

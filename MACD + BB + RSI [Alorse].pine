@@ -3,16 +3,17 @@
 //@version=4
 strategy("MACD + BB + RSI [Alorse]", shorttitle="MACD + BB + RSI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
 
-txtVer = "1.0.3"
+txtVer = "1.0.6"
 version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.\n\nEntry conditions:\nThe MACD line crosses over the signal line.\nRSI less than 50.\nPrice below the BB baseline.\n\nExit conditions:\nRSI greater than 70.\nClosing price higher than upper BB.")
 src = input(title="Source", type=input.source, defval=close)
 
 // MACD
-fast_length = input(title="Fast Length", type=input.integer, defval=12, group="MACD")
-slow_length = input(title="Slow Length", type=input.integer, defval=26, group="MACD")
-signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group="MACD")
-sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
-sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+macdGroup = "MACD"
+fast_length = input(title="Length   Fast", type=input.integer, defval=12, group=macdGroup, inline="macdLength")
+slow_length = input(title="Slow", type=input.integer, defval=26, group=macdGroup, inline="macdLength")
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group=macdGroup)
+sma_source = input(title="Oscillator", type=input.string, defval="EMA", options=["SMA", "EMA"], group=macdGroup, inline="macdMa", tooltip="Moving Average Type")
+sma_signal = input(title="Signal Line", type=input.string, defval="EMA", options=["SMA", "EMA"], group=macdGroup, inline="macdMa", tooltip="Moving Average Type")
 fast_ma = sma_source == "SMA" ? sma(src, fast_length) : ema(src, fast_length)
 slow_ma = sma_source == "SMA" ? sma(src, slow_length) : ema(src, slow_length)
 macd = fast_ma - slow_ma
@@ -40,35 +41,63 @@ rsiGroup = "RSI"
 lenRSI = input(14, title="Length", minval=1, group=rsiGroup)
 RSI = rsi(src, lenRSI)
 
-// Strategy Conditions
-buy = crossover(macd, signal) and RSI < 50 and close < basis
-sell = RSI > 70 and close > upper
+// DMI
+dmiGroup = "Directional Movement Index"
+isDMI = input(false, title="╔═════ DMI Filter ═════╗", group=dmiGroup, tooltip="Most Percent Profitable, less trades")
+len = input(14, minval=1, title="DI Length", group=dmiGroup)
+lensig = input(13, title="ADX Smoothing", minval=1, maxval=50, group=dmiGroup)
+keyLevel = input(23, title="key level", group=dmiGroup)
+[diplus,diminus,adx] = dmi(len, lensig)
+dmiLongFilter = isDMI ? (diplus > diminus or adx < keyLevel) : true
+dmiShortFilter = isDMI ? (diplus < diminus or adx < keyLevel) : true
 
+// Strategy Conditions
+stratGroup = "Strategy"
+showLong = input(true, title="Long entries", group=stratGroup)
+showShort = input(true, title="Short entries", group=stratGroup)
+entryLong = crossover(macd, signal) and RSI < 50 and close < basis and dmiLongFilter
+exitLong = RSI > 70 and close > upper
+entryShort = crossunder(macd, signal) and RSI > 50 and close > basis and dmiShortFilter
+exitShort = RSI < 31 and close < lower
+closeAfterXBars = input(true, title="Close after X # bars", group=stratGroup, tooltip="If trade is in profit")
+xBars = input(20, title="# bars", group=stratGroup)
+
+//If (#bars since close < lower BB)/2 is greater than green bars, so false.
+longBars = barssince(close < lower)
+greenBars = 0
+if entryLong
+    for i = 1 to longBars
+        greenBars := close[i] > close[i+1] ? greenBars+1 : greenBars
+    entryLong := greenBars >= ((longBars/2)-1) ? true : false
 // Stop Loss
 slGroup = "Stop Loss"
 useSL = input(false, title="╔══════   Enable   ══════╗", group=slGroup, tooltip="If you are using this strategy for Scalping or Futures market, we do not recommend using Stop Loss.")
-SLbased = input(title="Based on", type=input.string, defval="Percent", options=["ATR", "Percent"], group=slGroup, tooltip="ATR: Average True Range\nPercent: eg. 5%.")
-multiATR = input(10.0, title="ATR   Mult", type=input.float, group=slGroup, inline="atr")
-lengthATR = input(14, title="Length", type=input.integer, group=slGroup, inline="atr")
 SLPercent = input(10, title="Percent", type=input.float, group=slGroup) * 0.01
 
-longStop = 0.0
-shortStop = 0.0
+longStop  = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
 
-if SLbased == "ATR"
-    longStop := valuewhen(buy, low, 0) - (valuewhen(buy, rma(tr(true), lengthATR), 0) * multiATR)
-    longStopPrev = nz(longStop[1], longStop)
-    longStop := close[1] > longStopPrev ? max(longStop, longStopPrev) : longStop
+longIsOpen = strategy.position_size > 0
+shortIsOpen = strategy.position_size < 0
 
-    shortStop := (valuewhen(sell, rma(tr(true), lengthATR), 0) * multiATR) + valuewhen(sell, high, 0)
-    shortStopPrev = nz(shortStop[1], shortStop)
-    shortStop := close[1] > shortStopPrev ? max(shortStop, shortStopPrev) : shortStop
-if SLbased == "Percent"
-    longStop  := strategy.position_avg_price * (1 - SLPercent)
-    shortStop := strategy.position_avg_price * (1 + SLPercent)
+bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+entry_price = valuewhen(bought, open, 0)
 
-strategy.entry("Long", true, when=buy)
-strategy.close("Long", when=sell, comment="Exit")
+var int nPastBars=0
+if strategy.position_size > 0
+    nPastBars:=nPastBars+1
+if strategy.position_size == 0    
+    nPastBars:=0
+if closeAfterXBars
+    exitLong := nPastBars >= xBars and crossunder(macd, signal) and close > entry_price ? true : exitLong
 
-if useSL
-    strategy.exit("Stop Loss", "Long", stop=longStop)
+if showLong
+    strategy.entry("Long", true, when=entryLong and not shortIsOpen)
+    strategy.close("Long", when=exitLong, comment=tostring(nPastBars))
+    if useSL
+        strategy.exit("Stop Loss", "Long", stop=longStop)
+if showShort
+    strategy.entry("Short", false, when=entryShort and not longIsOpen)
+    strategy.close("Short", when=exitShort, comment="Exit")
+    if useSL
+        strategy.exit("Stop Loss", "Short", stop=shortStop)

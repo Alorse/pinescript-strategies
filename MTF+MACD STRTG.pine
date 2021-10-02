@@ -1,9 +1,9 @@
 //@version=4
 strategy(title="MACD + Divergences [Alorse]", shorttitle = "MACD + Divergences", pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
 // Getting inputs
+src = input(title="Source", type=input.source, defval=close)
 fast_length = input(title="Fast Length", type=input.integer, defval=12)
 slow_length = input(title="Slow Length", type=input.integer, defval=26)
-src = input(title="Source", type=input.source, defval=close)
 signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9)
 sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
 sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
@@ -30,10 +30,10 @@ plot(signal, title="Signal", color=color.new(col_signal, 10))
 donttouchzero = input(title="Don't touch the zero line?", defval=true)
 
 //Divergences
-lbR = input(title="Pivot Lookback Right", defval=5, group="Divergences")
-lbL = input(title="Pivot Lookback Left", defval=5, group="Divergences")
-rangeUpper = input(title="Max of Lookback Range", defval=60, group="Divergences")
-rangeLower = input(title="Min of Lookback Range", defval=5, group="Divergences")
+lbR = input(title="Pivot Lookback Right", defval=2, group="Divergences")
+lbL = input(title="Pivot Lookback Left", defval=7, group="Divergences")
+rangeUpper = input(title="Max of Lookback Range", defval=200, group="Divergences")
+rangeLower = input(title="Min of Lookback Range", defval=10, group="Divergences")
 plotBull = input(title="Plot Bullish", defval=true, group="Divergences")
 plotBear = input(title="Plot Bearish", defval=true, group="Divergences")
 
@@ -109,8 +109,34 @@ entry_price := buySignal ? close : sellSignal ? close : na(entry_price[1]) ? na 
 tpBuy = entry_price + ((entry_price - slBuy) * tpFactor)
 tpSell = entry_price - ((slSell - entry_price) * tpFactor)
 
+// Stop Loss
+slGroup = "Stop Loss"
+useSL = input(true, title="╔══════   Enable   ══════╗", group=slGroup, tooltip="If you are using this strategy for Scalping or Futures market, we do not recommend using Stop Loss.")
+SLbased = input(title="Based on", type=input.string, defval="Percent", options=["ATR", "Percent"], group=slGroup, tooltip="ATR: Average True Range\nPercent: eg. 5%.")
+multiATR = input(7.0, title="ATR   Mult", type=input.float, group=slGroup, inline="atr")
+lengthATR = input(14, title="Length", type=input.integer, group=slGroup, inline="atr")
+SLPercent = input(7, title="Percent", type=input.float, group=slGroup) * 0.01
+plotSL = input(true, title="Show SL", group=slGroup)
+
+longStop = 0.0
+shortStop = 0.0
+
+if SLbased == "ATR"
+    longStop := valuewhen(buySignal, low, 0) - (valuewhen(buySignal, rma(tr(true), lengthATR), 0) * multiATR)
+    longStopPrev = nz(longStop[1], longStop)
+    longStop := close[1] > longStopPrev ? max(longStop, longStopPrev) : longStop
+
+    shortStop := (valuewhen(sellSignal, rma(tr(true), lengthATR), 0) * multiATR) + valuewhen(sellSignal, high, 0)
+    shortStopPrev = nz(shortStop[1], shortStop)
+    shortStop := close[1] > shortStopPrev ? max(shortStop, shortStopPrev) : shortStop
+if SLbased == "Percent"
+    longStop  := strategy.position_avg_price * (1 - SLPercent)
+    shortStop := strategy.position_avg_price * (1 + SLPercent)
+
 
 strategy.entry("Long", true, when=buySignal)
-strategy.exit("Exit", "Long", stop=slBuy, limit=tpBuy)
+// strategy.close("Long", when=close > tpBuy)
+strategy.exit("Exit", "Long", stop=longStop, limit=tpBuy)
 strategy.entry("Short", false, when=sellSignal)
-strategy.exit("Exit", "Short", stop=slSell, limit=tpSell)
+// strategy.close("Short", when=close < tpSell)
+strategy.exit("Exit", "Short", stop=shortStop, limit=tpSell)

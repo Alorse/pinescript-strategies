@@ -116,12 +116,12 @@ buyExit = RSI < 70 and close < entry_price and buyzone > upper ? false : buyzone
 sellExit = RSI > 30 and close > entry_price and sellzone < lower ? false : sellzone < lower
 if showLong
     strategy.entry("Long", true, when=buy)
-    if closeLongEarly and useSL
-        strategy.exit("Exit", "Long", limit=upper, stop=longStop)
-    if not useSL and closeLongEarly
-        strategy.exit("Exit", "Long", limit=upper)
+    if closeLongEarly
+        strategy.close("Long", when=high > upper, comment="Close long early")
     if not showShort
-        strategy.close("Long", when=buyExit, comment="Exit")
+        strategy.close("Long", when=buyExit, comment="Close or Stop limit")
+    if useSL
+        strategy.exit("SL", "Long", stop=longStop)
 if showShort
     strategy.entry("Short", false, when=sell)
     if closeShortEarly and useSL
