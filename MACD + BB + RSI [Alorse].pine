@@ -59,6 +59,8 @@ entryLong = crossover(macd, signal) and RSI < 50 and close < basis and dmiLongFi
 exitLong = RSI > 70 and close > upper
 entryShort = crossunder(macd, signal) and RSI > 50 and close > basis and dmiShortFilter
 exitShort = RSI < 31 and close < lower
+doNotClose = input(25, title="Do not close trade yet", group=stratGroup, tooltip='Do not close the trade if ADX is lower than "X" and is rising.')
+exitLong := diplus > diminus and adx < doNotClose and adx[0] > adx[1] and adx[1] > adx[2] ? false : exitLong
 closeAfterXBars = input(true, title="Close after X # bars", group=stratGroup, tooltip="If trade is in profit")
 xBars = input(20, title="# bars", group=stratGroup)
 
@@ -89,11 +91,11 @@ if strategy.position_size > 0
 if strategy.position_size == 0    
     nPastBars:=0
 if closeAfterXBars
-    exitLong := nPastBars >= xBars and crossunder(macd, signal) and close > entry_price ? true : exitLong
+    exitLong := nPastBars >= xBars and close > upper and close > entry_price ? true : exitLong
 
 if showLong
     strategy.entry("Long", true, when=entryLong and not shortIsOpen)
-    strategy.close("Long", when=exitLong, comment=tostring(nPastBars))
+    strategy.close("Long", when=exitLong)
     if useSL
         strategy.exit("Stop Loss", "Long", stop=longStop)
 if showShort
