@@ -1,0 +1,44 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=4
+strategy("2 EMA/SMA + RSI Strategy [Alorse]", shorttitle="2 SMA + RSI STRTG [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+src = input(title="Source", type=input.source, defval=close)
+ma_type1 = input(title="Type", type=input.string, defval="SMA", options=["EMA", "SMA"], group="Moving Average 1 (Fast)")
+lenFast = input(10, minval=1, title="Periods", group="Moving Average 1 (Fast)")
+ma_type2 = input(title="Type", type=input.string, defval="SMA", options=["EMA", "SMA"], group="Moving Average 2 (Slow)")
+lenSlow = input(30, minval=1, title="Periods", group="Moving Average 2 (Slow)")
+ma_type3 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group="Moving Average 3 (Tendence)")
+lenTend = input(200, minval=1, title="Periods", group="Moving Average 3 (Tendence)")
+showCross = input(title="Show MA Cross", defval=true, group="Moving Averages")
+
+// Calculate moving averages
+maFast = ma_type1 == "EMA" ? ema(src, lenFast) : sma(src, lenFast)
+maSlow = ma_type2 == "EMA" ? ema(src, lenSlow) : sma(src, lenSlow)
+maTend = ma_type3 == "EMA" ? ema(src, lenTend) : sma(src, lenTend)
+
+// Plot moving averages
+plot(maFast, color=color.purple, title="Fast MA")
+plot(maSlow, color=color.blue, title="Slow MA")
+plot(maTend, color=color.yellow, title="Tendence MA", linewidth=2)
+
+// Cross detect
+cross_up = crossover(maFast , maSlow)
+cross_down = crossunder(maFast , maSlow)
+plot(showCross and cross_up or showCross and cross_down ? maFast : na, style=plot.style_cross, title="Cross", linewidth=2, color=color.white)
+
+// RSI
+len = input(8, minval=1, title="Length", group="RSI")
+up = rma(max(change(src), 0), len)
+down = rma(-min(change(src), 0), len)
+rsi = rsi(src, len)
+
+
+//Strategy Conditions
+showShort = input(false, title="Show Short entries", group="Strategy")
+
+long = maFast[1] > maSlow[1] and rsi[1] > 25 and rsi[1] < 40 and close[1] > open[1]
+short = maFast[1] < maSlow[1] and rsi[1] < 75 and rsi[1] > 60 and close[1] < open[1]
+strategy.entry("Long", true, when=long)
+strategy.entry("Short", false, when=short)

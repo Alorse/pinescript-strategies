@@ -1,7 +1,7 @@
 //@version=4
 // Based on Divergence MACD [mado]
 // URL: https://es.tradingview.com/script/ABhNVSWq/
-study(title="MACD + Divergences [Alorse]", shorttitle = "MACD Divergence", format=format.price)
+study(title="MACD + Divergences [Alorse]", shorttitle="MACD Divergence", format=format.price)
 // Getting inputs
 src = input(title="Source", type=input.source, defval=close)
 fast_length = input(title="Fast Length", type=input.integer, defval=12)

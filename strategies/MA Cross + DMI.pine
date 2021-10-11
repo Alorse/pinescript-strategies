@@ -1,0 +1,57 @@
+//@version=4
+strategy("MA Cross + DMI [Alorse]", shorttitle="MA Cross + DMI [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+txtVer = "0.0.1"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.\n\nEntry conditions:\n")
+src = input(title="Source", type=input.source, defval=close)
+
+// DMI
+dmiGroup = "Directional Movement Index"
+len = input(14, minval=1, title="DI Length", group=dmiGroup)
+lensig = input(13, title="ADX Smoothing", minval=1, maxval=50, group=dmiGroup)
+keyLevel = input(23, title="key level", group=dmiGroup)
+[diplus,diminus,adx] = dmi(len, lensig)
+
+// Moving Average
+maGroup = "Moving Average"
+ma1Type = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group=maGroup, inline="ma1")
+ma1Len = input(10, minval=1, title="Length", group=maGroup, inline="ma1")
+ma1 = ma1Type == "EMA" ? ema(src, ma1Len) : sma(src, ma1Len)
+plot(ma1, title="Moving Average 1", linewidth=1, color=color.new(color.blue, 10))
+
+ma2Type = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA"], group=maGroup, inline="ma2")
+ma2Len = input(20, minval=1, title="Length", group=maGroup, inline="ma2")
+ma2 = ma2Type == "EMA" ? ema(src, ma2Len) : sma(src, ma2Len)
+plot(ma2, title="Moving Average 2", linewidth=1, color=color.new(color.orange, 10))
+
+
+// Strategy
+stratGroup = "Strategy"
+showLong = input(true, title="Long entries", group=stratGroup)
+showShort = input(false, title="Short entries", group=stratGroup)
+
+longCond = diplus < diminus and diplus[1] < diminus[1] //and diplus[2] < diminus[2]
+shortCond = diplus > diminus and diplus[1] > diminus[1] //and diplus[2] > diminus[2]
+longEntry = crossover(ma1, ma2)
+shortEntry = crossunder(ma1, ma2)
+
+if showLong and not showShort
+    strategy.entry("Long", true, when=longEntry)
+    strategy.close("Long", when=shortEntry)
+if not showLong and showShort
+    strategy.entry("Short", false, when=shortEntry)
+    strategy.close("Short", when=longEntry)
+if showLong and showShort
+    strategy.entry("Long", true, when=longEntry)
+    strategy.entry("Short", false, when=shortEntry)
+
+// Stop Loss
+slGroup = "Stop Loss"
+useSL = input(false, title="╔══════   Enable   ══════╗", group=slGroup)
+SLPercent = input(10, title="Percent", type=input.float, group=slGroup) * 0.01
+
+longStop  = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+if useSL
+    strategy.exit("Stop Loss", "Long", stop=longStop)

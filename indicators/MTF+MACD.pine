@@ -1,5 +1,5 @@
 //@version=4
-study(title="MTF + MACD [Alorse]", shorttitle = "MTF + MACD", format=format.price, overlay=false, resolution="")
+study(title="MTF + MACD [Alorse]", shorttitle="MTF + MACD", format=format.price, overlay=false, resolution="")
 
 txtVer = "2.0.0"
 version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
