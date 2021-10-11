@@ -1,16 +1,20 @@
 //@version=4
-study(title="MACD + Divergences [Alorse]", shorttitle = "MACD + Divergences", format=format.price, overlay=true)
-// Getting inputs
-fast_length = input(title="Fast Length", type=input.integer, defval=12)
-slow_length = input(title="Slow Length", type=input.integer, defval=26)
+study(title="MTF + MACD [Alorse]", shorttitle = "MTF + MACD", format=format.price, overlay=false, resolution="")
+
+txtVer = "2.0.0"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
 src = input(title="Source", type=input.source, defval=close)
-signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9)
-sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
-sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"])
+// Getting inputs
+macdGroup = "MACD Settings"
+fast_length = input(title="Length   Fast", type=input.integer, defval=12, group=macdGroup, inline="macdLength")
+slow_length = input(title="Slow", type=input.integer, defval=26, group=macdGroup, inline="macdLength")
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group=macdGroup)
+sma_source = input(title="Oscillator", type=input.string, defval="EMA", options=["SMA", "EMA"], group=macdGroup, inline="macdMa", tooltip="Moving Average Type")
+sma_signal = input(title="Signal Line", type=input.string, defval="EMA", options=["SMA", "EMA"], group=macdGroup, inline="macdMa", tooltip="Moving Average Type")
 // Plot colors
 col_macd = input(#2962FF, "MACD Line  ", input.color, group="Color Settings", inline="MACD")
 col_signal = input(#FF6D00, "Signal Line  ", input.color, group="Color Settings", inline="Signal")
-showCross = input(title="Show Signals&MACD Cross", defval=true, group="Color Settings") // Show cross bt MACD & Signal
+showCross = input(title="Show Signals&MACD Cross", defval=true, group="Color Settings")
 col_grow_above = input(#00796b, "Above   Grow", input.color, group="Histogram", inline="Above")
 col_fall_above = input(#26a69a, "Fall", input.color, group="Histogram", inline="Above")
 col_grow_below = input(#ef5350, "Below Grow", input.color, group="Histogram", inline="Below")
@@ -25,12 +29,11 @@ plot(hist, title="Histogram", style=plot.style_columns, color=color.new((hist>=0
 plot(macd, title="MACD", color=color.new(col_macd, 10))
 plot(signal, title="Signal", color=color.new(col_signal, 10))
 
-
 //Divergences
-lbR = input(title="Pivot Lookback Right", defval=2, group="Divergences")
-lbL = input(title="Pivot Lookback Left", defval=2, group="Divergences")
-rangeUpper = input(title="Max of Lookback Range", defval=60, group="Divergences")
-rangeLower = input(title="Min of Lookback Range", defval=6, group="Divergences")
+lbR = input(title="Pivot Lookback   Right", defval=2, group="Divergences", inline="pivot")
+lbL = input(title="Left", defval=2, group="Divergences", inline="pivot")
+rangeUpper = input(title="Lookback Range   Max", defval=60, group="Divergences", inline="range")
+rangeLower = input(title="Min", defval=6, group="Divergences", inline="range")
 plotBull = input(title="Plot Bullish", defval=true, group="Divergences")
 plotHiddenBull = input(title="Plot Hidden Bullish", defval=false, group="Divergences")
 plotBear = input(title="Plot Bearish", defval=true, group="Divergences")
@@ -51,12 +54,14 @@ _inRange(cond) =>
     rangeLower <= bars and bars <= rangeUpper
 
 //Get MA Values
-maA = input(150, minval=1, title="EMA 1", group="Moving Averages")
-maB = input(600, minval=1, title="EMA 2", group="Moving Averages")
-//Get MTF data
-dataA = ema(src, maA)
-dataB = ema(src, maB)
+maA = input(title='Periods', minval=1, defval=50, group="MTF EMA 1", inline="ma1")
+resA = input(title='Resolution', type=input.resolution, defval="15", group="MTF EMA 1", inline="ma1")
+maB = input(title='Periods', minval=1, defval=50, group="MTF EMA 2", inline="ma2")
+resB = input(title='Resolution', type=input.resolution, defval="60", group="MTF EMA 2", inline="ma2")
 
+//get data
+dataA = security(syminfo.tickerid, resA, ema(src, maA))
+dataB = security(syminfo.tickerid, resB, ema(src, maB))
 trendBull = dataA > dataB and macd[lbR] < 0
 trendBear = dataA < dataB and macd[lbR] > 0
 
