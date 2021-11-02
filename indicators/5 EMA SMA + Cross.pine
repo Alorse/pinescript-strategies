@@ -1,45 +1,45 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
 //@author Alorse
-//@version=4
-study(title="5 EMA SMA WMA + Cross [Alorse]", shorttitle="5 MA + Cross [Alorse]", overlay=true)
+//@version=5
+indicator(title='5 EMA SMA WMA + Cross [Alorse]', shorttitle='5 MA + Cross [Alorse]', overlay=true)
 
-src = input(title="Source", type=input.source, defval=close)
-ma_type1 = input(title="Type", type=input.string, defval="SMA", options=["EMA", "SMA", "WMA"], group="Moving Average 1")
-ma1 = input(10, minval=1, title="Periods", group="Moving Average 1")
-ma_type2 = input(title="Type", type=input.string, defval="SMA", options=["EMA", "SMA", "WMA"], group="Moving Average 2")
-ma2 = input(55, minval=1, title="Periods", group="Moving Average 2")
-ma_type3 = input(title="Type", type=input.string, defval="WMA", options=["EMA", "SMA", "WMA"], group="Moving Average 3")
-ma3 = input(200, minval=1, title="Periods", group="Moving Average 3")
-ma_type4 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA", "WMA"], group="Moving Average 4")
-ma4 = input(20, minval=1, title="Periods", group="Moving Average 4")
-ma_type5 = input(title="Type", type=input.string, defval="EMA", options=["EMA", "SMA", "WMA"], group="Moving Average 5")
-ma5 = input(100, minval=1, title="Periods", group="Moving Average 5")
+src = input(title='Source', defval=close)
+ma_type1 = input.string(title='Type', defval='EMA', options=['EMA', 'SMA', 'WMA'], group='Moving Average 1')
+ma1 = input.int(10, minval=1, title='Periods', group='Moving Average 1')
+ma_type2 = input.string(title='Type', defval='EMA', options=['EMA', 'SMA', 'WMA'], group='Moving Average 2')
+ma2 = input.int(55, minval=1, title='Periods', group='Moving Average 2')
+ma_type3 = input.string(title='Type', defval='EMA', options=['EMA', 'SMA', 'WMA'], group='Moving Average 3')
+ma3 = input.int(200, minval=1, title='Periods', group='Moving Average 3')
+ma_type4 = input.string(title='Type', defval='SMA', options=['EMA', 'SMA', 'WMA'], group='Moving Average 4')
+ma4 = input.int(20, minval=1, title='Periods', group='Moving Average 4')
+ma_type5 = input.string(title='Type', defval='WMA', options=['EMA', 'SMA', 'WMA'], group='Moving Average 5')
+ma5 = input.int(100, minval=1, title='Periods', group='Moving Average 5')
 
 // Calculate moving averages
-maPlot1 = ma_type1 == "EMA" ? ema(src, ma1) : ma_type1 == "SMA" ? sma(src, ma1) : wma(src, ma1)
-maPlot2 = ma_type2 == "EMA" ? ema(src, ma2) : ma_type2 == "SMA" ? sma(src, ma2) : wma(src, ma2)
-maPlot3 = ma_type3 == "EMA" ? ema(src, ma3) : ma_type3 == "SMA" ? sma(src, ma3) : wma(src, ma3)
-maPlot4 = ma_type4 == "EMA" ? ema(src, ma4) : ma_type4 == "SMA" ? sma(src, ma4) : wma(src, ma4)
-maPlot5 = ma_type5 == "EMA" ? ema(src, ma5) : ma_type5 == "SMA" ? sma(src, ma5) : wma(src, ma5)
+maPlot1 = ma_type1 == 'EMA' ? ta.ema(src, ma1) : ma_type1 == 'SMA' ? ta.sma(src, ma1) : ta.wma(src, ma1)
+maPlot2 = ma_type2 == 'EMA' ? ta.ema(src, ma2) : ma_type2 == 'SMA' ? ta.sma(src, ma2) : ta.wma(src, ma2)
+maPlot3 = ma_type3 == 'EMA' ? ta.ema(src, ma3) : ma_type3 == 'SMA' ? ta.sma(src, ma3) : ta.wma(src, ma3)
+maPlot4 = ma_type4 == 'EMA' ? ta.ema(src, ma4) : ma_type4 == 'SMA' ? ta.sma(src, ma4) : ta.wma(src, ma4)
+maPlot5 = ma_type5 == 'EMA' ? ta.ema(src, ma5) : ma_type5 == 'SMA' ? ta.sma(src, ma5) : ta.wma(src, ma5)
 
 // Plot moving averages
-plot(maPlot1, color=color.purple, title="Moving Average 1")
-plot(maPlot2, color=color.blue, title="Moving Average 2")
-plot(maPlot3, color=color.yellow, title="Moving Average 3", linewidth=2)
-plot(maPlot4, color=color.green, title="Moving Average 4")
-plot(maPlot5, color=color.red, title="Moving Average 5", linewidth=2)
+plot(maPlot1, color=color.new(color.purple, 0), title='Moving Average 1')
+plot(maPlot2, color=color.new(color.blue, 0), title='Moving Average 2')
+plot(maPlot3, color=color.new(color.yellow, 0), title='Moving Average 3', linewidth=2)
+plot(maPlot4, color=color.new(color.green, 0), title='Moving Average 4')
+plot(maPlot5, color=color.new(color.red, 0), title='Moving Average 5', linewidth=2)
 
 // Crosses
-plot(cross(maPlot1, maPlot2) ? maPlot1 : na, style=plot.style_cross, title="Cross MA1-MA2", linewidth=2, color=color.aqua)
-plot(cross(maPlot1, maPlot3) ? maPlot1 : na, style=plot.style_cross, title="Cross MA1-MA3", linewidth=2, color=color.aqua)
-plot(cross(maPlot1, maPlot4) ? maPlot1 : na, style=plot.style_cross, title="Cross MA1-MA4", linewidth=2, color=color.aqua)
-plot(cross(maPlot1, maPlot5) ? maPlot1 : na, style=plot.style_cross, title="Cross MA1-MA5", linewidth=2, color=color.aqua)
+plot(ta.cross(maPlot1, maPlot2) ? maPlot1 : na, style=plot.style_cross, title='Cross MA1-MA2', linewidth=2, color=color.new(color.aqua, 0))
+plot(ta.cross(maPlot1, maPlot3) ? maPlot1 : na, style=plot.style_cross, title='Cross MA1-MA3', linewidth=2, color=color.new(color.aqua, 0))
+plot(ta.cross(maPlot1, maPlot4) ? maPlot1 : na, style=plot.style_cross, title='Cross MA1-MA4', linewidth=2, color=color.new(color.aqua, 0))
+plot(ta.cross(maPlot1, maPlot5) ? maPlot1 : na, style=plot.style_cross, title='Cross MA1-MA5', linewidth=2, color=color.new(color.aqua, 0))
 
-plot(cross(maPlot2, maPlot3) ? maPlot2 : na, style=plot.style_cross, title="Cross MA2-MA3", linewidth=2, color=color.fuchsia)
-plot(cross(maPlot2, maPlot4) ? maPlot2 : na, style=plot.style_cross, title="Cross MA2-MA4", linewidth=2, color=color.fuchsia)
-plot(cross(maPlot2, maPlot5) ? maPlot2 : na, style=plot.style_cross, title="Cross MA2-MA5", linewidth=2, color=color.fuchsia)
+plot(ta.cross(maPlot2, maPlot3) ? maPlot2 : na, style=plot.style_cross, title='Cross MA2-MA3', linewidth=2, color=color.new(color.fuchsia, 0))
+plot(ta.cross(maPlot2, maPlot4) ? maPlot2 : na, style=plot.style_cross, title='Cross MA2-MA4', linewidth=2, color=color.new(color.fuchsia, 0))
+plot(ta.cross(maPlot2, maPlot5) ? maPlot2 : na, style=plot.style_cross, title='Cross MA2-MA5', linewidth=2, color=color.new(color.fuchsia, 0))
 
-plot(cross(maPlot3, maPlot4) ? maPlot3 : na, style=plot.style_cross, title="Cross MA3-MA4", linewidth=2, color=color.teal)
-plot(cross(maPlot3, maPlot5) ? maPlot3 : na, style=plot.style_cross, title="Cross MA3-MA5", linewidth=2, color=color.teal)
+plot(ta.cross(maPlot3, maPlot4) ? maPlot3 : na, style=plot.style_cross, title='Cross MA3-MA4', linewidth=2, color=color.new(color.teal, 0))
+plot(ta.cross(maPlot3, maPlot5) ? maPlot3 : na, style=plot.style_cross, title='Cross MA3-MA5', linewidth=2, color=color.new(color.teal, 0))
 
-plot(cross(maPlot4, maPlot5) ? maPlot4 : na, style=plot.style_cross, title="Cross MA4-MA5", linewidth=2, color=color.yellow)
+plot(ta.cross(maPlot4, maPlot5) ? maPlot4 : na, style=plot.style_cross, title='Cross MA4-MA5', linewidth=2, color=color.new(color.yellow, 0))

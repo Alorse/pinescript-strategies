@@ -1,96 +1,97 @@
-//@version=4
+//@version=5
 //RSI
-study(title="Relative Strength Index Divergence [Alorse]", shorttitle="RSI Divergence [Alorse]", format=format.price, precision=2, resolution="")
-len = input(14, minval=1, title="Length", group="RSI")
-src = input(close, "Source", type = input.source, group="RSI")
-up = rma(max(change(src), 0), len)
-down = rma(-min(change(src), 0), len)
-rsi = rsi(src, len)
+indicator(title='Relative Strength Index Divergence [Alorse]', shorttitle='RSI Divergence [Alorse]', format=format.price, precision=2, timeframe='')
+len = input.int(14, minval=1, title='Length', group='RSI')
+src = input.source(close, 'Source', group='RSI')
+up = ta.rma(math.max(ta.change(src), 0), len)
+down = ta.rma(-math.min(ta.change(src), 0), len)
+rsi = ta.rsi(src, len)
 osc = rsi
-plot(rsi, "RSI", color=#7E57C2)
-band1 = hline(70, "Upper Band", color=#787B86)
-bandm = hline(50, "Middle Band", color=color.new(#787B86, 50))
-band0 = hline(30, "Lower Band", color=#787B86)
-fill(band1, band0, color=color.rgb(126, 87, 194, 90), title="Background")
+plot(rsi, 'RSI', color=color.new(#7E57C2, 0))
+band1 = hline(70, 'Upper Band', color=#787B86)
+bandm = hline(50, 'Middle Band', color=color.new(#787B86, 50))
+band0 = hline(30, 'Lower Band', color=#787B86)
+fill(band1, band0, color=color.rgb(126, 87, 194, 90), title='Background')
 
 //Divergences 
-lbR = input(title="Pivot Lookback Right", defval=5, group="Divergences")
-lbL = input(title="Pivot Lookback Left", defval=5, group="Divergences")
-rangeUpper = input(title="Max of Lookback Range", defval=60, group="Divergences")
-rangeLower = input(title="Min of Lookback Range", defval=5, group="Divergences")
-plotBull = input(title="Plot Bullish", defval=true, group="Divergences")
-plotHiddenBull = input(title="Plot Hidden Bullish", defval=true, group="Divergences")
-plotBear = input(title="Plot Bearish", defval=true, group="Divergences")
-plotHiddenBear = input(title="Plot Hidden Bearish", defval=true, group="Divergences")
+lbR = input.int(title='Pivot Lookback Right', defval=5, group='Divergences')
+lbL = input.int(title='Pivot Lookback Left', defval=5, group='Divergences')
+rangeUpper = input.int(title='Max of Lookback Range', defval=60, group='Divergences')
+rangeLower = input.int(title='Min of Lookback Range', defval=5, group='Divergences')
+plotBull = input.bool(title='Plot Bullish', defval=true, group='Divergences')
+plotHiddenBull = input.bool(title='Plot Hidden Bullish', defval=true, group='Divergences')
+plotBear = input.bool(title='Plot Bearish', defval=true, group='Divergences')
+plotHiddenBear = input.bool(title='Plot Hidden Bearish', defval=true, group='Divergences')
 
 bearColor = color.red
 bullColor = color.green
-hiddenBullColor = color.new(color.yellow,50)
-hiddenBearColor = color.new(color.yellow,50)
+hiddenBullColor = color.new(color.yellow, 50)
+hiddenBearColor = color.new(color.yellow, 50)
 textColor = color.white
 noneColor = color.new(color.white, 100)
 
-plFound = na(pivotlow(osc, lbL, lbR)) ? false : true
-phFound = na(pivothigh(osc, lbL, lbR)) ? false : true
+plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
 
 _inRange(cond) =>
-    bars = barssince(cond == true)
+    bars = ta.barssince(cond == true)
     rangeLower <= bars and bars <= rangeUpper
 
 //------------------------------------------------------------------------------
 // Regular Bullish
 
 // Osc: Higher Low
-oscHL = osc[lbR] > valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
 
 // Price: Lower Low
-priceLL = low[lbR] < valuewhen(plFound, low[lbR], 1)
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
 
 bullCond = plotBull and priceLL and oscHL and plFound
 
-plot(plFound ? osc[lbR] : na,offset=-lbR,title="Regular Bullish",linewidth=2,color=(bullCond ? bullColor : noneColor),transp=0)
+plot(plFound ? osc[lbR] : na, offset=-lbR, title='Regular Bullish', linewidth=2, color=bullCond ? color.new(bullColor, 0) : noneColor)
 // plotshape(bullCond ? osc[lbR] : na,offset=-lbR,title="Regular Bullish Label",text="⬆",style=shape.labelup,location=location.absolute,color=bullColor,textcolor=textColor,transp=0)
 
 //------------------------------------------------------------------------------
 // Hidden Bullish
 
 // Osc: Lower Low
-oscLL = osc[lbR] < valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
 
 // Price: Higher Low
-priceHL = low[lbR] > valuewhen(plFound, low[lbR], 1)
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
 
 hiddenBullCond = plotHiddenBull and priceHL and oscLL and plFound
 
-plot(plFound ? osc[lbR] : na,offset=-lbR,title="Hidden Bullish",linewidth=2,color=(hiddenBullCond ? hiddenBullColor : noneColor),transp=0)
+plot(plFound ? osc[lbR] : na, offset=-lbR, title='Hidden Bullish', linewidth=2, color=hiddenBullCond ? hiddenBullColor : noneColor)
 // plotshape(hiddenBullCond ? osc[lbR] : na,offset=-lbR,title="Hidden Bullish Label",text="⬆",style=shape.labelup,location=location.absolute,color=bullColor,textcolor=textColor,transp=0)
 
 //------------------------------------------------------------------------------
 // Regular Bearish
 
 // Osc: Lower High
-oscLH = osc[lbR] < valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
 
 // Price: Higher High
-priceHH = high[lbR] > valuewhen(phFound, high[lbR], 1)
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
 
 bearCond = plotBear and priceHH and oscLH and phFound
 
-plot(phFound ? osc[lbR] : na, offset=-lbR, title="Regular Bearish", linewidth=2, color=(bearCond ? color.new(bearColor, 0) : noneColor))
+plot(phFound ? osc[lbR] : na, offset=-lbR, title='Regular Bearish', linewidth=2, color=bearCond ? color.new(bearColor, 0) : noneColor)
 // plotshape(bearCond ? osc[lbR] : na, offset=-lbR, title="Regular Bearish Label", text="⬇", style=shape.labeldown, location=location.absolute, color=color.new(bearColor,100), textcolor=color.new(bearColor, 0))
 
 //------------------------------------------------------------------------------
 // Hidden Bearish
 
 // Osc: Higher High
-oscHH = osc[lbR] > valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
 
 // Price: Lower High
-priceLH = high[lbR] < valuewhen(phFound, high[lbR], 1)
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
 
 hiddenBearCond = plotHiddenBear and priceLH and oscHH and phFound
 
-plot(phFound ? osc[lbR] : na,offset=-lbR,title="Hidden Bearish",linewidth=2,color=(hiddenBearCond ? hiddenBearColor : noneColor),transp=0)
+plot(phFound ? osc[lbR] : na, offset=-lbR, title='Hidden Bearish', linewidth=2, color=hiddenBearCond ? hiddenBearColor : noneColor)
 // plotshape(hiddenBearCond ? osc[lbR] : na,offset=-lbR,title="Hidden Bearish Label",text="⬇",style=shape.labeldown,location=location.absolute,color=bearColor,textcolor=textColor,transp=0)
 
-alertcondition((bullCond ? rsi[lbR] : na) or (bearCond ? rsi[lbR] : na), "Divergence", '{"text": "{{ticker}}: Divergence in {{interval}} minutes"}')
+alertcondition((bullCond ? rsi[lbR] : na) or (bearCond ? rsi[lbR] : na), 'Divergence', '{"text": "{{ticker}}: Divergence in {{interval}} minutes"}')
+

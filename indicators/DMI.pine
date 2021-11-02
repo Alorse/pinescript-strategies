@@ -1,15 +1,15 @@
-//@version=4
-study("DMI Trade Zone [Alorse]", shorttitle="DMI TZ [Alorse]")
-len = input(14, minval=1, title="DI Length")
-lensig = input(14, title="ADX Smoothing", minval=1, maxval=50)
-keyLevel = input(23, title="key level")
-pl = input(false, title="Plot DI- & DI+")
-[diplus,diminus,adx] = dmi(len, lensig)
+//@version=5
+indicator('DMI Trade Zone [Alorse]', shorttitle='DMI TZ [Alorse]')
+len = input.int(14, minval=1, title='DI Length')
+lensig = input.int(14, title='ADX Smoothing', minval=1, maxval=50)
+keyLevel = input(23, title='key level')
+pl = input(false, title='Plot DI- & DI+')
+[diplus, diminus, adx] = ta.dmi(len, lensig)
 cond = diplus > diminus
 colo = cond ? color.green : color.red
-plot(adx, color=color.new(color.white, 50), title="Shadow", linewidth=3)
-plot(adx, color=colo, title="ADX", linewidth=2)
-plot(pl ? diminus: na, color=color.red, title="DI-")
-plot(pl ? diplus : na, color=color.green, title="DI+")
+plot(adx, color=color.new(color.white, 50), title='Shadow', linewidth=3)
+plot(adx, color=colo, title='ADX', linewidth=2)
+plot(pl ? diminus : na, color=color.new(color.red, 0), title='DI-')
+plot(pl ? diplus : na, color=color.new(color.green, 0), title='DI+')
 hline(keyLevel)
 bgcolor(cond ? color.new(color.silver, 92) : na)
