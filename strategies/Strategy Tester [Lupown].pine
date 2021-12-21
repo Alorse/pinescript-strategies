@@ -1,0 +1,113 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Lupown
+// i got inpiration from @The art of trading
+
+//@version=5
+strategy('Strategy Tester', shorttitle='StrategyTest', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+lengthM = input.int(20, title='Length', minval=1, step=1, group='Momentum Indicator')
+srcM = input(close, title='Source', group='Momentum Indicator')
+
+adxlen = input.int(14, title = "ADX Smoothing", group='Directional Movement Index')
+dilen = input.int(14, title = "DI Length", group='Directional Movement Index') 
+keyLevel = input.int(23, title = "Key level for ADX", group='Directional Movement Index')
+
+source_ATR = input(close, title='Source', group='Average True Range')
+length_ATR = input.int(14, minval=1, title='Period', group='Average True Range')
+multiplier = input.float(1.6, minval=0.1, step=0.1, title='Multiplier', group='Average True Range')
+shortStopLoss = source_ATR + ta.atr(length_ATR) * multiplier
+longStopLoss = source_ATR - ta.atr(length_ATR) * multiplier
+structureLookback = input(1, title='Lookback', group='Average True Range')
+
+momentum = input(false, title='Salir por momentum', tooltip='Cuando el Momentum Indicator se gire a la baja.')
+estrategia = input(true, title='Salir por estrategia', tooltip='')
+drawTester = input(true, title='Mostrar estadísticas', tooltip='Muestra un cuadro en la parte inferior derecha del gráfico con las estadisticas de la estrategia en la temporalidad actual.')
+
+//Momentum
+sz = ta.linreg(srcM - math.avg(math.avg(ta.highest(high, lengthM), ta.lowest(low, lengthM)), ta.sma(close, lengthM)), lengthM, 0)
+lbR = 1
+lbL = 1
+
+//FUNCTIONS
+plFound(osc) =>
+    na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound(osc) =>
+    na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+
+[adxValue, diplus, diminus] = ta.dmi(dilen, adxlen)
+
+buy_cond1 = phFound(sz) and adxValue < adxValue[1] ? true : false
+buy_cond2 = phFound(adxValue) and sz >= sz[1] and sz < 0 ? true : false
+
+buy_c = buy_cond1 or buy_cond2
+
+
+sell_cond1 = phFound(sz) and adxValue < adxValue[1] ? true : false
+sell_cond2 = phFound(adxValue) and sz < sz[1] and sz > 0 and adxValue > keyLevel ? true : false
+
+sell_c = sell_cond1 or sell_cond2
+
+goLongCondition1 = buy_c
+goLongCondition2 = true
+inTradeL = strategy.position_size > 0
+notInTrade = strategy.position_size == 0
+inTradeS = strategy.position_size < 0
+goShortCondition1 = false  //sell_c//
+goShortCondition2 = false
+exitL = phFound(sz)
+var longStop = 0.0
+var shortStopl = 0.0
+var limitL = 0.0
+var limitS = 0.0
+var longslp = 0.0
+
+
+//timePeriod = time >= timestamp(syminfo.timezone, 2020, 11, 1, 0, 0)
+if goLongCondition1 and notInTrade
+    strategy.entry('long', strategy.long, when=inTradeL != true)
+    limitL := shortStopLoss + shortStopLoss - close
+    strategy.exit('exit', 'long', stop=longStopLoss)  //,limit =  limitL //limit is if you wanna have 1:1 
+    longStop := longStopLoss
+    longStop
+
+if goShortCondition1 and notInTrade  //in this code go ShortCondition is false by default
+    strategy.entry('short', strategy.short, when=inTradeS != true)
+    limitS := longStopLoss - (close - longStopLoss)
+    strategy.exit('exitShort', 'short', stop=shortStopLoss)  //, limit = limitS //limit is if you wanna have 1:1 
+    shortStopl := shortStopLoss
+    shortStopl
+
+
+var trailPrice = 0.0
+var trailPrices = 0.0
+atr = ta.atr(length_ATR)
+t_trailPrice = ta.lowest(low, structureLookback) - atr * multiplier
+t_trailPrices = ta.lowest(low, structureLookback) + atr * multiplier
+
+
+if inTradeL and sell_c and estrategia
+    strategy.close_all()
+if inTradeL and exitL and momentum
+    strategy.close_all()
+
+truncate(_number, _decimalPlaces) =>
+    _factor = math.pow(10, _decimalPlaces)
+    int(_number * _factor) / _factor
+
+// Prepare stats table
+var table testTable = table.new(position.bottom_right, 5, 2, border_width=1)
+f_fillCell(_table, _column, _row, _title, _value, _bgcolor, _txtcolor) =>
+    _cellText = _title + '\n' + _value
+    table.cell(_table, _column, _row, _cellText, bgcolor=_bgcolor, text_color=_txtcolor)
+
+// Draw stats table
+var bgcolor = color.new(color.black, 0)
+if drawTester
+    if barstate.islastconfirmedhistory
+        percent = strategy.netprofit * 100 / strategy.initial_capital
+        f_fillCell(testTable, 0, 0, 'Total Trades:', str.tostring(strategy.closedtrades), bgcolor, color.white)
+        f_fillCell(testTable, 0, 1, 'Win Rate:', str.tostring(truncate(strategy.wintrades / strategy.closedtrades * 100, 2)) + '%', bgcolor, color.white)
+        f_fillCell(testTable, 1, 0, 'Starting:', '$' + str.tostring(strategy.initial_capital), bgcolor, color.white)
+        f_fillCell(testTable, 1, 1, 'Ending:', '$' + str.tostring(truncate(strategy.initial_capital + strategy.netprofit, 2)), bgcolor, color.white)
+        f_fillCell(testTable, 2, 0, 'Return:', '$' + str.tostring(truncate(strategy.netprofit, 2)), strategy.netprofit > 0 ? color.green : color.red, color.white)
+        f_fillCell(testTable, 2, 1, '% return:', (percent > 0 ? '+' : '') + str.tostring(truncate(percent, 2)), percent > 0 ? color.green : color.red, color.white)

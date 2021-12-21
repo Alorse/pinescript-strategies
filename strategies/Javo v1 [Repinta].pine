@@ -1,0 +1,38 @@
+//@version=5
+strategy('Japo v1 [Alorse]', shorttitle='Japo [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=10000, default_qty_value=50, commission_type=strategy.commission.percent, commission_value=0.1)
+
+res = input.timeframe(title="Heikin Ashi Candle Timeframe", defval="60")
+hshift = input(1, title="Heikin Ashi Candle Timeframe Shift")
+res1 = input.timeframe(title="Heikin Ashi Candle Timeframe", defval="180")
+mshift = input(0, title="Heikin Ashi EMA timeframe Shift")
+fama = input(1, title="Heikin Ashi EMA Periods")
+test = input(1, title="Heikin Ashi EMA Shift")
+sloma = input(30, title="Slow EMA Periods")
+slomas = input(1, title="Slow  EMA Shift")
+
+// Heikin Ashi Open/Close price
+ha_t = ticker.heikinashi(syminfo.tickerid)
+
+ha_close = request.security(ha_t, res, close[hshift], lookahead=barmerge.lookahead_on)
+mha_close = request.security(ha_t, res1, close[mshift], lookahead=barmerge.lookahead_on)
+
+// EMAs
+fma = ta.ema(mha_close[test], fama)
+sma = ta.ema(mha_close[slomas], sloma)
+plot(fma, title="MA", color=color.lime, linewidth=2, style=plot.style_line)
+plot(sma, title="SMA", color=color.red, linewidth=2, style=plot.style_line)
+
+// Strategy
+golong = ta.crossover(fma,sma)
+goshort = ta.crossunder(fma,sma)
+
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Nov 01 2021 23:59:59"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
+
+inDateRange = time >= startTime and time <= endTime
+
+if inDateRange
+    strategy.entry("Long", strategy.long, when=golong)
+    strategy.entry("Short", strategy.short, when=goshort)

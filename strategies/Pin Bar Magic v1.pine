@@ -1,0 +1,69 @@
+//@version=4
+//Time Frame: H1
+strategy("Pin Bar Magic v1", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// User Input
+usr_risk = input(title="Equity Risk (%)",type=input.integer,minval=1,maxval=100,step=1,defval=3,confirm=false)
+atr_mult = input(title="Stop Loss (x*ATR, Float)",type=input.float,minval=0.1,maxval=100,step=0.1,defval=0.5,confirm=false)
+slPoints = input(title="Stop Loss Trail Points (Pips)",type=input.integer,minval=1,maxval=1000,step=1,defval=1,confirm=false)
+slOffset = input(title="Stop Loss Trail Offset (Pips)",type=input.integer,minval=1,maxval=1000,step=1,defval=1,confirm=false)
+sma_slow = input(title="Slow SMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=50,confirm=false)
+ema_medm = input(title="Medm EMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=18,confirm=false)
+ema_fast = input(title="Fast EMA (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=6,confirm=false)
+atr_valu = input(title="ATR (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=14,confirm=false)
+ent_canc = input(title="Cancel Entry After X Bars (Period)",type=input.integer,minval=1,maxval=500,step=1,defval=3,confirm=false)
+
+// Create Indicators
+slowSMA = sma(close, sma_slow)
+medmEMA = ema(close, ema_medm)
+fastEMA = ema(close, ema_fast)
+bullishPinBar = ((close > open) and ((open - low) > 0.66 * (high - low))) or ((close < open) and ((close - low) > 0.66 * (high - low)))
+bearishPinBar = ((close > open) and ((high - close) > 0.66 * (high - low))) or ((close < open) and ((high - open) > 0.66 * (high - low)))
+atr = atr(atr_valu)
+
+// Specify Trend Conditions
+fanUpTrend = (fastEMA > medmEMA) and (medmEMA > slowSMA)
+fanDnTrend = (fastEMA < medmEMA) and (medmEMA < slowSMA)
+
+// Specify Piercing Conditions
+bullPierce = ((low < fastEMA) and (open > fastEMA) and (close > fastEMA)) or ((low < medmEMA) and (open > medmEMA) and (close > medmEMA)) or ((low < slowSMA) and (open > slowSMA) and (close > slowSMA))
+bearPierce = ((high > fastEMA) and (open < fastEMA) and (close < fastEMA)) or ((high > medmEMA) and (open < medmEMA) and (close < medmEMA)) or ((high > slowSMA) and (open < slowSMA) and (close < slowSMA))
+    
+// Specify Entry Conditions
+longEntry = fanUpTrend and bullishPinBar and bullPierce
+shortEntry = fanDnTrend and bearishPinBar and bearPierce
+
+// Long Entry Function
+enterlong() =>
+    risk = usr_risk * 0.01 * strategy.equity
+    stopLoss = low[1] - atr[1] * atr_mult
+    entryPrice = high[1]
+    units = risk / (entryPrice - stopLoss)
+    strategy.entry("long", strategy.long, units, stop=entryPrice)
+    strategy.exit("exit long", from_entry="long", trail_points=slPoints, trail_offset=slOffset)
+    
+// Short Entry Function
+entershort() =>
+    risk = usr_risk * 0.01 * strategy.equity
+    stopLoss = high[1] + atr[1] * atr_mult
+    entryPrice = low[1]
+    units = risk / (stopLoss - entryPrice)
+    strategy.entry("short", strategy.short, units, stop=entryPrice)
+    strategy.exit("exit short", from_entry="short", trail_points=slPoints, trail_offset=slOffset)
+    
+// Execute Long Entry
+if (longEntry)
+    enterlong()
+
+// Execute Short Entry
+if (shortEntry)
+    entershort() 
+    
+// Cancel the Entry if Bar Time is Exceeded
+strategy.cancel("long", barssince(longEntry) > ent_canc)
+strategy.cancel("short", barssince(shortEntry) > ent_canc)
+
+// Force Close During Certain Conditions
+strategy.close_all(when = hour==16 and dayofweek==dayofweek.friday, comment = "exit all, market-closed")
+strategy.close_all(when = crossunder(fastEMA, medmEMA), comment = "exit long, re-cross")
+strategy.close_all(when = crossover(fastEMA, medmEMA), comment = "exit short, re-cross")
