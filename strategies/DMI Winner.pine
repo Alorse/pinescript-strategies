@@ -27,18 +27,25 @@ stratGroup = 'Strategy'
 showLong = input.bool(true, title='Long entries', group=stratGroup)
 showShort = input.bool(false, title='Short entries', group=stratGroup)
 
-longCond = diplus < diminus and diplus[1] < diminus[1] and diplus[2] < diminus[2]
-shortCond = diplus > diminus and diplus[1] > diminus[1] and diplus[2] > diminus[2]
-longEntry = shortCond and adx > keyLevel and buyMaFilter
-shortEntry = longCond and adx > keyLevel and sellMaFilter
+longCond = diplus > diminus and diplus[1] > diminus[1] and diplus[2] > diminus[2]
+shortCond = diplus < diminus and diplus[1] < diminus[1] and diplus[2] < diminus[2]
+longEntry = longCond and adx > keyLevel and buyMaFilter and close > open
+shortEntry = shortCond and adx > keyLevel and sellMaFilter and close < open
 
-if showLong and not showShort
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Feb 01 2021 23:59:59"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
+
+inDateRange = time >= startTime and time <= endTime
+
+if showLong and not showShort and inDateRange
     strategy.entry('Long', strategy.long, when=longEntry)
     strategy.close('Long', when=shortEntry)
-if not showLong and showShort
+if not showLong and showShort and inDateRange
     strategy.entry('Short', strategy.short, when=shortEntry)
     strategy.close('Short', when=longEntry)
-if showLong and showShort
+if showLong and showShort and inDateRange
     strategy.entry('Long', strategy.long, when=longEntry)
     strategy.entry('Short', strategy.short, when=shortEntry)
 

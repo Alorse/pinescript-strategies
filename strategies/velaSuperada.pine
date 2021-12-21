@@ -1,0 +1,63 @@
+//@version=5
+strategy('Improvisando [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+txtVer = '0.0.1'
+version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\n')
+src = input(title='Source', defval=close)
+
+
+// Strategy
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(false, title='Short entries', group=stratGroup)
+
+// Moving Averages
+len_a = input.int(10, minval=1, title='EMA A Length', group='Moving Averages')
+out_a = ta.ema(close, len_a)
+plot(out_a, title='EMA A', color=color.purple)
+
+// RSI
+len = input.int(14, minval=1, title='Length', group='RSI')
+rsi = ta.rsi(close, len)
+
+buy = close[1] < open[1] and close > open[1]
+sell = close[1] > open[1] and close < close[1]
+
+entryLong = buy and rsi < 60 and close > out_a
+entryShort = sell and rsi > 40 and close < out_a
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+qtyPercent = input.float(100, step=1, title='Percent to sell', group=tpGroup)
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
+
+// Stop Loss
+slGroup = 'Stop Loss'
+useSL = input.bool(false, title='╔══════   Enable   ══════╗', group=slGroup)
+SLPercent = input.float(1.8, title='Percent', group=slGroup) * 0.01
+
+longStop = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+entry_price = ta.valuewhen(bought, open, 0)
+
+AvgLongTP = (longTP + entry_price) / 2
+AvgShortTP = (shortTP + entry_price) / 2
+
+TlongStop = 0.0
+TshortStop =  0.0
+TlongStop := close > AvgLongTP ? strategy.position_avg_price * (1.002) : math.max(TlongStop[1], longStop)
+TshortStop :=  close < AvgShortTP ? strategy.position_avg_price * (1 - 0.002) : math.max(TshortStop[1], shortStop)
+
+if showLong
+    strategy.entry('Long', strategy.long, when=entryLong)
+    strategy.close('Long', when=close < TlongStop)
+    strategy.exit('TP', 'Long', limit=longTP, stop=longStop)
+if showShort
+    strategy.entry('Short', strategy.short, when=entryShort)
+    strategy.close('Short', when=close > TshortStop)
+    strategy.exit('TP', 'Short', limit=shortTP, stop=shortStop)

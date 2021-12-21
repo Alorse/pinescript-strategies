@@ -1,0 +1,47 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy("Supertrend + RSI Strategy [Alose]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+
+stGroup = 'Supertrend'
+atrPeriod = input(10, "ATR Length", group=stGroup)
+factor = input.float(3.0, "Factor", step = 0.01, group=stGroup)
+
+[_, direction] = ta.supertrend(factor, atrPeriod)
+
+inLong = direction < 0
+inShort = direction > 0
+
+// RSI
+rsiGroup = 'RSI'
+src = input(title='Source', defval=close, group=rsiGroup)
+lenRSI = input.int(14, title='Length', minval=1, group=rsiGroup)
+RSI = ta.rsi(src, lenRSI)
+
+// Strategy Conditions
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(false, title='Short entries', group=stratGroup)
+TPPercent = input.float(1.2, step=0.1, title='TP', group=stratGroup)
+RSIoverbought = input.int(72, title='Exit Long', minval=1, group=stratGroup, tooltip='The trade will close when the RSI crosses up this point.')
+RSIoversold = input.int(28, title='Exit Short', minval=1, group=stratGroup, tooltip='The trade will close when the RSI crosses below this point.')
+
+entryLong = inLong and RSI[1] < 50 and RSI > 50
+exitLong = RSI > RSIoverbought or ta.change(direction) > 0
+
+entryShort = inShort and RSI[1] > 50 and RSI < 50
+exitShort = RSI < RSIoversold or ta.change(direction) < 0
+
+longTP = strategy.position_avg_price * (1 + (TPPercent * 0.01))
+shortTP = strategy.position_avg_price * (1 - (TPPercent * 0.01))
+
+if showLong
+    strategy.entry("Long", strategy.long, when=entryLong)
+    // strategy.exit("Exit", "Long", limit=longTP)
+    strategy.close("Long", when=exitLong)
+
+if showShort
+    strategy.entry("Short", strategy.short, when=entryShort)
+    // strategy.exit("Exit", "Short", limit=shortTP)
+    strategy.close("Short", when=exitShort)

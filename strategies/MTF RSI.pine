@@ -1,0 +1,23 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy("MTF RSI", overlay=true, overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+
+// RSI
+rsiGroup = 'RSI'
+lenRSI = input.int(14, title='Length', minval=1, group=rsiGroup)
+rsi_overbought = input(70, title='RSI Overbought Level', group=rsiGroup)
+rsi_oversold = input(30, title='RSI Overbought Level', group=rsiGroup)
+RSI = ta.rsi(close, lenRSI)
+
+maGroup = "Moving Average"
+ma_type = input.string(title='Type', defval='EMA', options=['SMA', 'EMA'], group=maGroup, inline='ma')
+ma_length = input.int(title='Length', defval=900, group=maGroup, inline='ma')
+ma = ma_type == 'SMA' ? ta.sma(close, ma_length) : ta.ema(close, ma_length)
+
+longEntry = close > ma and RSI < rsi_oversold
+longExit = RSI > rsi_overbought or close < ma
+
+strategy.entry('Long', strategy.long, when=longEntry)
+strategy.close('Long', when=longExit)

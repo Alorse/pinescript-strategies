@@ -1,0 +1,31 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy(title='Double RSI [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+rsiGroup = 'RSI'
+len = input.int(14, minval=1, title='Length', group=rsiGroup)
+src = input.source(close, 'Source', group=rsiGroup)
+rsi = ta.rsi(src, len)
+
+multiGroup = 'Multi Timeframe RSI'
+resA = input.timeframe(title='Timeframe', defval='15', group=multiGroup)
+mRsi = request.security(syminfo.tickerid, resA, ta.rsi(src, len))
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
+
+// Strategy
+buy = ta.crossover(rsi, 30) and mRsi < 35
+sell = ta.crossunder(rsi, 70) and mRsi > 65
+strategy.entry('Long', strategy.long, when=buy)
+strategy.exit('Exit', 'Long', stop=na, limit=longTP)
+
+strategy.entry('Short', strategy.short, when=sell)
+strategy.exit('Exit', 'Short', stop=na, limit=shortTP)
+

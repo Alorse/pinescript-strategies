@@ -1,0 +1,103 @@
+//@version=5
+strategy('Improvisando [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+txtVer = '0.0.1'
+version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\n')
+src = input(title='Source', defval=close)
+
+// Moving Averages
+len_a = input.int(125, minval=1, title='EMA A Length', group='Moving Averages')
+out_a = ta.ema(close, len_a)
+plot(out_a, title='EMA A', color=color.purple)
+
+len_b = input.int(680, minval=1, title='EMA B Length', group='Moving Averages')
+out_b = ta.ema(close, len_b)
+plot(out_b, title='EMA B', color=color.orange)
+
+len_c = input.int(2500, minval=1, title='EMA C Length', group='Moving Averages')
+out_c = ta.ema(close, len_c)
+plot(out_c, title='EMA C', color=color.green)
+
+// TTM Squeeze
+length = input.int(title='Length', defval=20, minval=0, group="TTM Squeeze")
+bband(length, mult) =>
+    ta.sma(close, length) + mult * ta.stdev(close, length)
+keltner(length, mult) =>
+    ta.ema(close, length) + mult * ta.ema(ta.tr, length)
+
+e1 = (ta.highest(high, length) + ta.lowest(low, length)) / 2 + ta.sma(close, length)
+osc = ta.linreg(close - e1 / 2, length, 0)
+diff = bband(length, 2) - keltner(length, 1)
+
+
+// Strategy
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(false, title='Short entries', group=stratGroup)
+
+buy = osc < 0 and osc[1] < osc and osc[2] < osc
+sell = osc > 0 and osc[1] > osc and osc[2] > osc
+
+entryLong = close > out_a and close > out_b and close > out_c and buy
+entryShort = close < out_a and close < out_b and close < out_c and sell
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+qtyPercent = input.float(100, step=1, title='Percent to sell', group=tpGroup)
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
+
+trailLongLevel = strategy.position_avg_price * (1 + 0.002)
+trailShortLevel = strategy.position_avg_price * (1 - 0.002)
+
+exitLong = close < out_c
+exitShort = close > out_c
+
+ifLongTP = useTP ? close > longTP or exitLong : exitLong
+ifShortTP = useTP ? close < shortTP or exitShort : exitShort
+
+
+closeLongBeforeTP = close > longTP and osc[1] > osc
+closeShortBeforeTP = close < shortTP and osc[1] < osc
+// closeAfterXBars = input.bool(false, title='Close after X # bars', group=stratGroup, tooltip='If trade is in profit')
+// xBars = input.int(20, title='# bars', group=stratGroup)
+
+// bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+// entry_price = ta.valuewhen(bought, open, 0)
+
+// var int nPastBars = 0
+// if strategy.position_size > 0
+//     nPastBars := nPastBars + 1
+//     nPastBars
+// if strategy.position_size == 0
+//     nPastBars := 0
+//     nPastBars
+// if closeAfterXBars
+//     ifLongTP := nPastBars >= xBars and close > entry_price ? true : ifLongTP
+//     ifLongTP
+
+// Stop Loss
+slGroup = 'Stop Loss'
+useSL = input.bool(false, title='╔══════   Enable   ══════╗', group=slGroup)
+SLPercent = input.float(1.8, title='Percent', group=slGroup) * 0.01
+
+longStop = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+// strategy.entry('Long', strategy.long, when=entryLong)
+// strategy.entry('Short', strategy.short, when=entryLong)
+
+if showLong
+    strategy.entry('Long', strategy.long, when=entryLong)
+    // strategy.close('Long', when=ifLongTP, comment='Close')
+    strategy.close('Long', when=closeLongBeforeTP, comment='TP')
+    strategy.exit('SL', 'Long', stop=longStop)
+    // strategy.exit('SL', 'Long', stop=longStop, qty_percent=100)
+if showShort
+    strategy.entry('Short', strategy.short, when=entryShort)
+    // strategy.close('Short', when=ifShortTP, comment='Close')
+    strategy.close('Short', when=closeShortBeforeTP, comment='TP') // Close by Strategy
+    strategy.exit('SL', 'Short', stop=shortStop) // Sell half position
+    // strategy.exit('SL', 'Short', stop=shortStop, qty_percent=100) // StopLoss
