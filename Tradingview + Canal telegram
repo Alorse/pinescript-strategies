@@ -1,0 +1,24 @@
+1 Abrir Telegram web
+2 Crear Bot
+3 Crear Canal y buscar ID del canal
+4 Agregar Bot al Canal
+5 Probar con Postman
+6 Crear alerta con webhook en Tradingview.
+
+
+Cuando veas el video completo vas a entender para que son esta URL y este código.
+
+
+`https://api.telegram.org/bot[BOT_TOKEN]/sendMessage?chat_id=-100[CHAT_ID]`
+
+```// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+indicator("Alerta de vela", overlay=true)
+
+if close > open
+    alert('{"text": "' + syminfo.tickerid + ': La vela cerró en verde ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+if close < open
+    alert('{"text": "' + syminfo.tickerid + ': La vela cerró en rojo ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+```

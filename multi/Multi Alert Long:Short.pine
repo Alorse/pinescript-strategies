@@ -1,0 +1,241 @@
+//
+//@author Alorse
+//@version=5
+indicator("Multi Alert Long/Short [Alorse]", overlay=true)
+
+green1 = #009688
+red1 = #f44336
+
+screenerFunc(_ticker, action, entry, tp, sl) =>
+    [op, cl, lo, hi] = request.security(_ticker, timeframe.period, [open, close, low, high])
+
+    cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
+    if ta.crossover(cl, entry) and action == 'buy'
+        alert('612e425361de9e0072e37083|AOS_1P|buy|' + cleanTicker)
+    if ta.crossunder(cl, entry) and action == 'sell'
+        alert('612e425361de9e0072e37083|AOS_1P|sell|' + cleanTicker)
+    if ta.cross(cl, tp)
+        alert('612e425361de9e0072e37083|AOS_1P|close|' + cleanTicker)
+    if ta.cross(cl, sl)
+        alert('612e425361de9e0072e37083|AOS_1P|close|' + cleanTicker)
+
+    if syminfo.tickerid == _ticker and action == 'buy'
+        label.new(bar_index, entry, str.tostring(entry), color=color.gray, style=label.style_xcross, textcolor=color.white, size=size.tiny)
+        label.new(bar_index, tp, str.tostring(tp), color=color.green, style=label.style_xcross, textcolor=color.white, size=size.tiny)
+        label.new(bar_index, sl, str.tostring(sl), color=color.red, style=label.style_xcross, textcolor=color.white, size=size.tiny)
+
+// Symbols 
+// There is a limit of 40 security calls so only 40 symbols at the same time is possible
+
+e01 = input.bool(title='', defval=true, group='Symbol 1', inline='s01')
+s01 = input.symbol('BTCUSDT', title='', group='Symbol 1', inline='s01')
+action01 = input.string(title='Type', defval='buy', options=['buy', 'sell', 'close'], group='Symbol 1')
+entry01 = input.float(1.0, title='Entry Price', group='Symbol 1')
+close01 = input.float(1.1, title='Take Profit', group='Symbol 1')
+stop01 = input.float(1.1, title='Stop Loss', group='Symbol 1')
+
+// entry001 = plot(syminfo.tickerid == s01 and action01 == 'buy' ? entry01 : na, title='Up Trend', style=plot.style_line, color=color.new(close > entry01 ? green1 : red1, 0))
+// close001 = plot(syminfo.tickerid == s01 and action01 == 'buy' ? close01 : na, title='Up Trend', style=plot.style_line, color=color.new(green1, 100))
+// stop001 = plot(syminfo.tickerid == s01 and action01 == 'buy' ? stop01 : na, title='Up Trend', style=plot.style_line, color=color.new(red1, 100))
+// fill(entry001, close001, title='UpTrend Highligter', color=color.new(green1, 90))
+// fill(entry001, stop001, title='DownTrend Highligter', color=color.new(red1, 90))
+
+
+e02 = input.bool(title='', defval=true, group='Symbol 2', inline='s02')
+s02 = input.symbol('ETHUSDT', title='', group='Symbol 2', inline='s02')
+
+e03 = input.bool(title='', defval=true, group='Symbol 3', inline='s03')
+s03 = input.symbol('BNBUSDT', title='', group='Symbol 3', inline='s03')
+
+e04 = input.bool(title='', defval=true, group='Symbol 4', inline='s04')
+s04 = input.symbol('ADAUSDT', title='', group='Symbol 4', inline='s04')
+
+e05 = input.bool(title='', defval=true, group='Symbol 5', inline='s05')
+s05 = input.symbol('XRPUSDT', title='', group='Symbol 5', inline='s05')
+
+e06 = input.bool(title='', defval=true, group='Symbol 6', inline='s06')
+s06 = input.symbol('SOLUSDT', title='', group='Symbol 6', inline='s06')
+
+e07 = input.bool(title='', defval=true, group='Symbol 7', inline='s07')
+s07 = input.symbol('DOTUSDT', title='', group='Symbol 7', inline='s07')
+
+e08 = input.bool(title='', defval=true, group='Symbol 8', inline='s08')
+s08 = input.symbol('VETUSDT', title='', group='Symbol 8', inline='s08')
+
+e09 = input.bool(title='', defval=true, group='Symbol 9', inline='s09')
+s09 = input.symbol('UNIUSDT', title='', group='Symbol 9', inline='s09')
+
+e10 = input.bool(title='', defval=true, group='Symbol 10', inline='s10')
+s10 = input.symbol('LUNAUSDT', title='', group='Symbol 10', inline='s10')
+
+e11 = input.bool(title='', defval=true, group='Symbol 11', inline='s11')
+s11 = input.symbol('AVAXUSDT', title='', group='Symbol 11', inline='s11')
+
+e12 = input.bool(title='', defval=true, group='Symbol 12', inline='s12')
+s12 = input.symbol('LTCUSDT', title='', group='Symbol 12', inline='s12')
+
+e13 = input.bool(title='', defval=true, group='Symbol 13', inline='s13')
+s13 = input.symbol('ICPUSDT', title='', group='Symbol 13', inline='s13')
+
+e14 = input.bool(title='', defval=true, group='Symbol 14', inline='s14')
+s14 = input.symbol('LINKUSDT', title='', group='Symbol 14', inline='s14')
+
+e15 = input.bool(title='', defval=true, group='Symbol 15', inline='s15')
+s15 = input.symbol('BCHUSDT', title='', group='Symbol 15', inline='s15')
+
+e16 = input.bool(title='', defval=true, group='Symbol 16', inline='s16')
+s16 = input.symbol('ALGOUSDT', title='', group='Symbol 16', inline='s16')
+
+e17 = input.bool(title='', defval=true, group='Symbol 17', inline='s17')
+s17 = input.symbol('XLMUSDT', title='', group='Symbol 17', inline='s17')
+
+e18 = input.bool(title='', defval=true, group='Symbol 18', inline='s18')
+s18 = input.symbol('MATICUSDT', title='', group='Symbol 18', inline='s18')
+
+e19 = input.bool(title='', defval=true, group='Symbol 19', inline='s19')
+s19 = input.symbol('AXSUSDT', title='', group='Symbol 19', inline='s19')
+
+
+e20 = input.bool(title='', defval=false, group='Symbol 20', inline='s20')
+s20 = input.symbol('FILUSDT', title='', group='Symbol 20', inline='s20')
+
+e21 = input.bool(title='', defval=false, group='Symbol 21', inline='s21')
+s21 = input.symbol('ATOMUSDT', title='', group='Symbol 21', inline='s21')
+
+e22 = input.bool(title='', defval=false, group='Symbol 22', inline='s22')
+s22 = input.symbol('CHZUSDT', title='', group='Symbol 22', inline='s22')
+
+e23 = input.bool(title='', defval=false, group='Symbol 23', inline='s23')
+s23 = input.symbol('BTTUSDT', title='', group='Symbol 23', inline='s23')
+
+e24 = input.bool(title='', defval=false, group='Symbol 24', inline='s24')
+s24 = input.symbol('TRXUSDT', title='', group='Symbol 24', inline='s24')
+
+e25 = input.bool(title='', defval=false, group='Symbol 25', inline='s25')
+s25 = input.symbol('ETCUSDT', title='', group='Symbol 25', inline='s25')
+
+e26 = input.bool(title='', defval=false, group='Symbol 26', inline='s26')
+s26 = input.symbol('XTZUSDT', title='', group='Symbol 26', inline='s26')
+
+e27 = input.bool(title='', defval=false, group='Symbol 27', inline='s27')
+s27 = input.symbol('THETAUSDT', title='', group='Symbol 27', inline='s27')
+
+e28 = input.bool(title='', defval=false, group='Symbol 28', inline='s28')
+s28 = input.symbol('HBARUSDT', title='', group='Symbol 28', inline='s28')
+
+e29 = input.bool(title='', defval=false, group='Symbol 29', inline='s29')
+s29 = input.symbol('FTMUSDT', title='', group='Symbol 29', inline='s29')
+
+e30 = input.bool(title='', defval=false, group='Symbol 30', inline='s30')
+s30 = input.symbol('XMRUSDT', title='', group='Symbol 30', inline='s30')
+
+e31 = input.bool(title='', defval=false, group='Symbol 31', inline='s31')
+s31 = input.symbol('EGLDUSDT', title='', group='Symbol 31', inline='s31')
+
+e32 = input.bool(title='', defval=false, group='Symbol 32', inline='s32')
+s32 = input.symbol('EOSUSDT', title='', group='Symbol 32', inline='s32')
+
+e33 = input.bool(title='', defval=false, group='Symbol 33', inline='s33')
+s33 = input.symbol('KLAYUSDT', title='', group='Symbol 33', inline='s33')
+
+e34 = input.bool(title='', defval=false, group='Symbol 34', inline='s34')
+s34 = input.symbol('AAVEUSDT', title='', group='Symbol 34', inline='s34')
+
+e35 = input.bool(title='', defval=false, group='Symbol 35', inline='s35')
+s35 = input.symbol('IOTAUSDT', title='', group='Symbol 35', inline='s35')
+
+e36 = input.bool(title='', defval=false, group='Symbol 36', inline='s36')
+s36 = input.symbol('NEARUSDT', title='', group='Symbol 36', inline='s36')
+
+e37 = input.bool(title='', defval=false, group='Symbol 37', inline='s37')
+s37 = input.symbol('WAVESUSDT', title='', group='Symbol 37', inline='s37')
+
+e38 = input.bool(title='', defval=false, group='Symbol 38', inline='s38')
+s38 = input.symbol('GRTUSDT', title='', group='Symbol 38', inline='s38')
+
+e39 = input.bool(title='', defval=false, group='Symbol 39', inline='s39')
+s39 = input.symbol('NEOUSDT', title='', group='Symbol 39', inline='s39')
+
+e40 = input.bool(title='', defval=false, group='Symbol 40', inline='s40')
+s40 = input.symbol('KSMUSDT', title='', group='Symbol 40', inline='s40')
+
+if e01
+    screenerFunc(s01, action01, entry01, close01, stop01)
+// if e02
+//     screenerFunc(s02)
+// if e03
+//     screenerFunc(s03)
+// if e04
+//     screenerFunc(s04)
+// if e05
+//     screenerFunc(s05)
+// if e06
+//     screenerFunc(s06)
+// if e07
+//     screenerFunc(s07)
+// if e08
+//     screenerFunc(s08)
+// if e09
+//     screenerFunc(s09)
+// if e10
+//     screenerFunc(s10)
+// if e11
+//     screenerFunc(s11)
+// if e12
+//     screenerFunc(s12)
+// if e13
+//     screenerFunc(s13)
+// if e14
+//     screenerFunc(s14)
+// if e15
+//     screenerFunc(s15)
+// if e16
+//     screenerFunc(s16)
+// if e17
+//     screenerFunc(s17)
+// if e18
+//     screenerFunc(s18)
+// if e19
+//     screenerFunc(s19)
+// if e20
+//     screenerFunc(s20)
+// if e21
+//     screenerFunc(s21)
+// if e22
+//     screenerFunc(s22)
+// if e23
+//     screenerFunc(s23)
+// if e24
+//     screenerFunc(s24)
+// if e25
+//     screenerFunc(s25)
+// if e26
+//     screenerFunc(s26)
+// if e27
+//     screenerFunc(s27)
+// if e28
+//     screenerFunc(s28)
+// if e29
+//     screenerFunc(s29)
+// if e30
+//     screenerFunc(s30)
+// if e31
+//     screenerFunc(s31)
+// if e32
+//     screenerFunc(s32)
+// if e33
+//     screenerFunc(s33)
+// if e34
+//     screenerFunc(s34)
+// if e35
+//     screenerFunc(s35)
+// if e36
+//     screenerFunc(s36)
+// if e37
+//     screenerFunc(s37)
+// if e38
+//     screenerFunc(s38)
+// if e39
+//     screenerFunc(s39)
+// if e40
+//     screenerFunc(s40)

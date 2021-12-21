@@ -1,0 +1,24 @@
+//@version=5
+indicator('Supertrend From Scratch [Alorse]', overlay=true, format=format.price, precision=2, timeframe='')
+
+Periods = input(title='ATR Period', defval=10)
+src = input(hl2, title='Source')
+Multiplier = input.float(title='ATR Multiplier', step=0.1, defval=3.0)
+atr = ta.atr(Periods)
+up = src - Multiplier * atr
+up1 = nz(up[1], up)
+up := close[1] > up1 ? math.max(up, up1) : up
+dn = src + Multiplier * atr
+dn1 = nz(dn[1], dn)
+dn := close[1] < dn1 ? math.min(dn, dn1) : dn
+trend = 1
+trend := nz(trend[1], trend)
+trend := trend == -1 and close > dn1 ? 1 : trend == 1 and close < up1 ? -1 : trend
+upPlot = plot(trend == 1 ? up : na, title='Up Trend', style=plot.style_linebr, color=color.new(color.green, 0))
+buySignal = trend == 1 and trend[1] == -1
+dnPlot = plot(trend == 1 ? na : dn, title='Down Trend', style=plot.style_linebr, color=color.new(color.red, 0))
+sellSignal = trend == -1 and trend[1] == 1
+mPlot = plot(ohlc4, title='', style=plot.style_circles, linewidth=0)
+fill(mPlot, upPlot, title='UpTrend Highligter', color=color.new(color.green, 90))
+fill(mPlot, dnPlot, title='DownTrend Highligter', color=color.new(color.red, 90))
+

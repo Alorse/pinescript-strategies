@@ -1,0 +1,14 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © Alorse
+//@version=5
+indicator(title='Percent & Volatility [Alorse]', shorttitle='P&V', overlay=false)
+
+change = input.int(5, minval=1, title='Change %', tooltip='Show strong color if candle percent greater than this number')
+
+percent_volatility = ((high - low) * 100) / low
+percent_change = ((close - open) * 100) / open
+
+plot(percent_volatility, color=color.new(color.teal, percent_volatility > change ? 0 : 70), title='Low/High', style=plot.style_columns)
+plot(percent_change, color=color.new(color.orange, math.abs(percent_change) > change ? 0 : 70), title='Open/Close', style=plot.style_columns)
+if math.abs(percent_change) > change
+    alert('{"text": "' + cleanTicker + ': Cambió ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)

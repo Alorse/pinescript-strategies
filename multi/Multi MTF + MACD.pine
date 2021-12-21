@@ -1,0 +1,284 @@
+//@version=5
+indicator(title='Multi Alert MACD Divegences [Alorse]', shorttitle='Multi Alert MACD Divegences [Alorse]', overlay=true)
+
+_inRange(cond, rangeUpper, rangeLower) =>
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+screenerFunc(_ticker, lbR, lbL, rangeUpper, rangeLower) =>
+    [cl, lo, hi] = request.security(_ticker, timeframe.period, [close, low, high])
+    macd = ta.ema(cl, 12) - ta.ema(cl, 26)
+    dataA = ta.ema(cl, 150)
+    dataB = ta.ema(cl, 600)
+    // Regular Bullish
+    trendBull = dataA > dataB and macd[lbR] < 0
+    plFound = na(ta.pivotlow(macd, lbL, lbR)) ? false : true
+    oscHL = macd[lbR] > ta.valuewhen(plFound, macd[lbR], 1) and _inRange(plFound[1], rangeUpper, rangeLower)
+    priceLL = lo[lbR] < ta.valuewhen(plFound, lo[lbR], 1)
+    bullCond = priceLL and oscHL and plFound
+    // Regular Bearish
+    trendBear = dataA < dataB and macd[lbR] > 0
+    phFound = na(ta.pivothigh(macd, lbL, lbR)) ? false : true
+    oscLH = macd[lbR] < ta.valuewhen(phFound, macd[lbR], 1) and _inRange(phFound[1], rangeUpper, rangeLower)
+    priceHH = hi[lbR] > ta.valuewhen(phFound, hi[lbR], 1)
+    bearCond = priceHH and oscLH and phFound
+
+    entrylong = bullCond and trendBull
+    entryShort = bearCond and trendBear
+    cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
+    if entrylong
+        alert('{"text": "🟢 ' + cleanTicker + ': Divergencia alcista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+    if entryShort
+        alert('{"text": "🔴 ' + cleanTicker + ': Divergencia bajista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+
+    [macd, entrylong, entryShort]
+
+
+//Divergences
+lbR = input.int(title='Pivot Lookback   Right', defval=2, group='Divergences', inline='pivot')
+lbL = input.int(title='Left', defval=2, group='Divergences', inline='pivot')
+rangeUpper = input.int(title='Lookback Range   Max', defval=60, group='Divergences', inline='range')
+rangeLower = input.int(title='Min', defval=6, group='Divergences', inline='range')
+
+// Symbols 
+// There is a limit of 40 security calls so only 40 symbols at the same time is possible
+
+e01 = input.bool(title='', defval=true, group='Symbol 1', inline='s01')
+s01 = input.symbol('BTCUSDT', title='', group='Symbol 1', inline='s01')
+
+e02 = input.bool(title='', defval=true, group='Symbol 2', inline='s02')
+s02 = input.symbol('ETHUSDT', title='', group='Symbol 2', inline='s02')
+
+e03 = input.bool(title='', defval=true, group='Symbol 3', inline='s03')
+s03 = input.symbol('BNBUSDT', title='', group='Symbol 3', inline='s03')
+
+e04 = input.bool(title='', defval=true, group='Symbol 4', inline='s04')
+s04 = input.symbol('ADAUSDT', title='', group='Symbol 4', inline='s04')
+
+e05 = input.bool(title='', defval=true, group='Symbol 5', inline='s05')
+s05 = input.symbol('XRPUSDT', title='', group='Symbol 5', inline='s05')
+
+e06 = input.bool(title='', defval=true, group='Symbol 6', inline='s06')
+s06 = input.symbol('SOLUSDT', title='', group='Symbol 6', inline='s06')
+
+e07 = input.bool(title='', defval=true, group='Symbol 7', inline='s07')
+s07 = input.symbol('DOTUSDT', title='', group='Symbol 7', inline='s07')
+
+e08 = input.bool(title='', defval=true, group='Symbol 8', inline='s08')
+s08 = input.symbol('DOGEUSDT', title='', group='Symbol 8', inline='s08')
+
+e09 = input.bool(title='', defval=true, group='Symbol 9', inline='s09')
+s09 = input.symbol('UNIUSDT', title='', group='Symbol 9', inline='s09')
+
+e10 = input.bool(title='', defval=true, group='Symbol 10', inline='s10')
+s10 = input.symbol('LUNAUSDT', title='', group='Symbol 10', inline='s10')
+
+e11 = input.bool(title='', defval=true, group='Symbol 11', inline='s11')
+s11 = input.symbol('AVAXUSDT', title='', group='Symbol 11', inline='s11')
+
+e12 = input.bool(title='', defval=true, group='Symbol 12', inline='s12')
+s12 = input.symbol('LTCUSDT', title='', group='Symbol 12', inline='s12')
+
+e13 = input.bool(title='', defval=true, group='Symbol 13', inline='s13')
+s13 = input.symbol('SHIBUSDT', title='', group='Symbol 13', inline='s13')
+
+e14 = input.bool(title='', defval=true, group='Symbol 14', inline='s14')
+s14 = input.symbol('LINKUSDT', title='', group='Symbol 14', inline='s14')
+
+e15 = input.bool(title='', defval=true, group='Symbol 15', inline='s15')
+s15 = input.symbol('BCHUSDT', title='', group='Symbol 15', inline='s15')
+
+e16 = input.bool(title='', defval=true, group='Symbol 16', inline='s16')
+s16 = input.symbol('ALGOUSDT', title='', group='Symbol 16', inline='s16')
+
+e17 = input.bool(title='', defval=true, group='Symbol 17', inline='s17')
+s17 = input.symbol('XLMUSDT', title='', group='Symbol 17', inline='s17')
+
+e18 = input.bool(title='', defval=true, group='Symbol 18', inline='s18')
+s18 = input.symbol('MATICUSDT', title='', group='Symbol 18', inline='s18')
+
+e19 = input.bool(title='', defval=true, group='Symbol 19', inline='s19')
+s19 = input.symbol('AXSUSDT', title='', group='Symbol 19', inline='s19')
+
+e20 = input.bool(title='', defval=true, group='Symbol 20', inline='s20')
+s20 = input.symbol('FILUSDT', title='', group='Symbol 20', inline='s20')
+
+e21 = input.bool(title='', defval=true, group='Symbol 21', inline='s21')
+s21 = input.symbol('ATOMUSDT', title='', group='Symbol 21', inline='s21')
+
+e22 = input.bool(title='', defval=true, group='Symbol 22', inline='s22')
+s22 = input.symbol('VETUSDT', title='', group='Symbol 22', inline='s22')
+
+e23 = input.bool(title='', defval=true, group='Symbol 23', inline='s23')
+s23 = input.symbol('ICPUSDT', title='', group='Symbol 23', inline='s23')
+
+e24 = input.bool(title='', defval=true, group='Symbol 24', inline='s24')
+s24 = input.symbol('TRXUSDT', title='', group='Symbol 24', inline='s24')
+
+e25 = input.bool(title='', defval=true, group='Symbol 25', inline='s25')
+s25 = input.symbol('ETCUSDT', title='', group='Symbol 25', inline='s25')
+
+e26 = input.bool(title='', defval=true, group='Symbol 26', inline='s26')
+s26 = input.symbol('XTZUSDT', title='', group='Symbol 26', inline='s26')
+
+e27 = input.bool(title='', defval=true, group='Symbol 27', inline='s27')
+s27 = input.symbol('THETAUSDT', title='', group='Symbol 27', inline='s27')
+
+e28 = input.bool(title='', defval=true, group='Symbol 28', inline='s28')
+s28 = input.symbol('HBARUSDT', title='', group='Symbol 28', inline='s28')
+
+e29 = input.bool(title='', defval=true, group='Symbol 29', inline='s29')
+s29 = input.symbol('FTMUSDT', title='', group='Symbol 29', inline='s29')
+
+e30 = input.bool(title='', defval=true, group='Symbol 30', inline='s30')
+s30 = input.symbol('XMRUSDT', title='', group='Symbol 30', inline='s30')
+
+e31 = input.bool(title='', defval=true, group='Symbol 31', inline='s31')
+s31 = input.symbol('EGLDUSDT', title='', group='Symbol 31', inline='s31')
+
+e32 = input.bool(title='', defval=true, group='Symbol 32', inline='s32')
+s32 = input.symbol('EOSUSDT', title='', group='Symbol 32', inline='s32')
+
+e33 = input.bool(title='', defval=true, group='Symbol 33', inline='s33')
+s33 = input.symbol('KLAYUSDT', title='', group='Symbol 33', inline='s33')
+
+e34 = input.bool(title='', defval=true, group='Symbol 34', inline='s34')
+s34 = input.symbol('AAVEUSDT', title='', group='Symbol 34', inline='s34')
+
+e35 = input.bool(title='', defval=true, group='Symbol 35', inline='s35')
+s35 = input.symbol('IOTAUSDT', title='', group='Symbol 35', inline='s35')
+
+e36 = input.bool(title='', defval=true, group='Symbol 36', inline='s36')
+s36 = input.symbol('NEARUSDT', title='', group='Symbol 36', inline='s36')
+
+e37 = input.bool(title='', defval=true, group='Symbol 37', inline='s37')
+s37 = input.symbol('WAVESUSDT', title='', group='Symbol 37', inline='s37')
+
+e38 = input.bool(title='', defval=true, group='Symbol 38', inline='s38')
+s38 = input.symbol('GRTUSDT', title='', group='Symbol 38', inline='s38')
+
+e39 = input.bool(title='', defval=true, group='Symbol 39', inline='s39')
+s39 = input.symbol('NEOUSDT', title='', group='Symbol 39', inline='s39')
+
+e40 = input.bool(title='', defval=true, group='Symbol 40', inline='s40')
+s40 = input.symbol('KSMUSDT', title='', group='Symbol 40', inline='s40')
+
+if e01
+    [macd01, entrylong01, entryShort01] = screenerFunc(s01, lbR, lbL, rangeUpper, rangeLower)
+
+if e02
+    [macd02, entrylong02, entryShort02] = screenerFunc(s02, lbR, lbL, rangeUpper, rangeLower)
+
+if e03
+    [macd03, entrylong03, entryShort03] = screenerFunc(s03, lbR, lbL, rangeUpper, rangeLower)
+
+if e04
+    [macd04, entrylong04, entryShort04] = screenerFunc(s04, lbR, lbL, rangeUpper, rangeLower)
+
+if e05
+    [macd05, entrylong05, entryShort05] = screenerFunc(s05, lbR, lbL, rangeUpper, rangeLower)
+
+if e06
+    [macd06, entrylong06, entryShort06] = screenerFunc(s06, lbR, lbL, rangeUpper, rangeLower)
+
+if e07
+    [macd07, entrylong07, entryShort07] = screenerFunc(s07, lbR, lbL, rangeUpper, rangeLower)
+
+if e08
+    [macd08, entrylong08, entryShort08] = screenerFunc(s08, lbR, lbL, rangeUpper, rangeLower)
+
+if e09
+    [macd09, entrylong09, entryShort09] = screenerFunc(s09, lbR, lbL, rangeUpper, rangeLower)
+
+if e10
+    [macd10, entrylong10, entryShort10] = screenerFunc(s10, lbR, lbL, rangeUpper, rangeLower)
+
+if e11
+    [macd11, entrylong11, entryShort11] = screenerFunc(s11, lbR, lbL, rangeUpper, rangeLower)
+
+if e12
+    [macd12, entrylong12, entryShort12] = screenerFunc(s12, lbR, lbL, rangeUpper, rangeLower)
+
+if e13
+    [macd13, entrylong13, entryShort13] = screenerFunc(s13, lbR, lbL, rangeUpper, rangeLower)
+
+if e14
+    [macd14, entrylong14, entryShort14] = screenerFunc(s14, lbR, lbL, rangeUpper, rangeLower)
+
+if e15
+    [macd15, entrylong15, entryShort15] = screenerFunc(s15, lbR, lbL, rangeUpper, rangeLower)
+
+if e16
+    [macd16, entrylong16, entryShort16] = screenerFunc(s16, lbR, lbL, rangeUpper, rangeLower)
+
+if e17
+    [macd17, entrylong17, entryShort17] = screenerFunc(s17, lbR, lbL, rangeUpper, rangeLower)
+
+if e18
+    [macd18, entrylong18, entryShort18] = screenerFunc(s18, lbR, lbL, rangeUpper, rangeLower)
+
+if e19
+    [macd19, entrylong19, entryShort19] = screenerFunc(s19, lbR, lbL, rangeUpper, rangeLower)
+
+if e20
+    [macd20, entrylong20, entryShort20] = screenerFunc(s20, lbR, lbL, rangeUpper, rangeLower)
+
+if e21
+    [macd21, entrylong21, entryShort21] = screenerFunc(s21, lbR, lbL, rangeUpper, rangeLower)
+
+if e22
+    [macd22, entrylong22, entryShort22] = screenerFunc(s22, lbR, lbL, rangeUpper, rangeLower)
+
+if e23
+    [macd23, entrylong23, entryShort23] = screenerFunc(s23, lbR, lbL, rangeUpper, rangeLower)
+
+if e24
+    [macd24, entrylong24, entryShort24] = screenerFunc(s24, lbR, lbL, rangeUpper, rangeLower)
+
+if e25
+    [macd25, entrylong25, entryShort25] = screenerFunc(s25, lbR, lbL, rangeUpper, rangeLower)
+
+if e26
+    [macd26, entrylong26, entryShort26] = screenerFunc(s26, lbR, lbL, rangeUpper, rangeLower)
+
+if e27
+    [macd27, entrylong27, entryShort27] = screenerFunc(s27, lbR, lbL, rangeUpper, rangeLower)
+
+if e28
+    [macd28, entrylong28, entryShort28] = screenerFunc(s28, lbR, lbL, rangeUpper, rangeLower)
+
+if e29
+    [macd29, entrylong29, entryShort29] = screenerFunc(s29, lbR, lbL, rangeUpper, rangeLower)
+
+if e30
+    [macd30, entrylong30, entryShort30] = screenerFunc(s30, lbR, lbL, rangeUpper, rangeLower)
+
+if e31
+    [macd31, entrylong31, entryShort31] = screenerFunc(s31, lbR, lbL, rangeUpper, rangeLower)
+
+if e32
+    [macd32, entrylong32, entryShort32] = screenerFunc(s32, lbR, lbL, rangeUpper, rangeLower)
+
+if e33
+    [macd33, entrylong33, entryShort33] = screenerFunc(s33, lbR, lbL, rangeUpper, rangeLower)
+
+if e34
+    [macd34, entrylong34, entryShort34] = screenerFunc(s34, lbR, lbL, rangeUpper, rangeLower)
+
+if e35
+    [macd35, entrylong35, entryShort35] = screenerFunc(s35, lbR, lbL, rangeUpper, rangeLower)
+
+if e36
+    [macd36, entrylong36, entryShort36] = screenerFunc(s36, lbR, lbL, rangeUpper, rangeLower)
+
+if e37
+    [macd37, entrylong37, entryShort37] = screenerFunc(s37, lbR, lbL, rangeUpper, rangeLower)
+
+if e38
+    [macd38, entrylong38, entryShort38] = screenerFunc(s38, lbR, lbL, rangeUpper, rangeLower)
+
+if e39
+    [macd39, entrylong39, entryShort39] = screenerFunc(s39, lbR, lbL, rangeUpper, rangeLower)
+
+if e40
+    [macd40, entrylong40, entryShort40] = screenerFunc(s40, lbR, lbL, rangeUpper, rangeLower)
