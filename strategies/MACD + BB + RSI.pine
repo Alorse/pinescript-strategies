@@ -1,9 +1,9 @@
 //
 //@author Alorse
 //@version=5
-strategy('MACD + BB + RSI [Alorse]', shorttitle='MACD + BB + RSI [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+strategy('MACD + BB + RSI [Alorse]', shorttitle='MACD + BB + RSI [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
 
-txtVer = '1.0.7'
+txtVer = '1.0.8'
 version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\nThe MACD line crosses over the signal line.\nRSI less than 50.\nPrice below the BB baseline.\n\nExit conditions:\nRSI greater than 70.\nClosing price higher than upper BB.')
 src = input(title='Source', defval=close)
 
@@ -34,7 +34,7 @@ lower = basis - dev
 plot(isBB ? basis : na, 'Basis', color=color.new(color.orange, 75), offset=offset)
 pb1 = plot(isBB ? upper : na, color=color.new(color.lime, 75), title='Upper')
 pb2 = plot(isBB ? lower : na, color=color.new(color.lime, 75), title='Lower')
-fill(pb1, pb2, color=color.new(color.lime, 99), title='Background', transp=90)
+fill(pb1, pb2, color=color.new(color.lime, 99), title='Background')
 
 // RSI
 rsiGroup = 'RSI'
@@ -55,12 +55,12 @@ dmiShortFilter = isDMI ? diplus < diminus or adx < keyLevel : true
 stratGroup = 'Strategy'
 showLong = input.bool(true, title='Long entries', group=stratGroup)
 showShort = input.bool(false, title='Short entries', group=stratGroup)
-entryLong = ta.crossover(macd, signal) and RSI < 50 and close < basis and dmiLongFilter
+entryLong = ta.crossover(macd, signal) and RSI < 50 and close < basis and dmiLongFilter //and close > open
 exitLong = RSI > 70 and close > upper
 entryShort = ta.crossunder(macd, signal) and RSI > 50 and close > basis and dmiShortFilter
 exitShort = RSI < 31 and close < lower
-doNotClose = input.int(25, title='Do not close trade yet', group=stratGroup, tooltip='Do not close the trade if ADX is lower than "X" and is rising.')
-exitLong := diplus > diminus and adx < doNotClose and adx[0] > adx[1] and adx[1] > adx[2] ? false : exitLong
+// doNotClose = input.int(25, title='Do not close trade yet', group=stratGroup, tooltip='Do not close the trade if ADX is lower than "X" and is rising.')
+// exitLong := diplus > diminus and adx < doNotClose and adx[0] > adx[1] and adx[1] > adx[2] ? false : exitLong
 closeAfterXBars = input.bool(false, title='Close after X # bars', group=stratGroup, tooltip='If trade is in profit')
 xBars = input.int(20, title='# bars', group=stratGroup)
 
@@ -80,6 +80,13 @@ SLPercent = input.float(10, title='Percent', group=slGroup) * 0.01
 
 longStop = strategy.position_avg_price * (1 - SLPercent)
 shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
 
 longIsOpen = strategy.position_size > 0
 shortIsOpen = strategy.position_size < 0
@@ -101,13 +108,11 @@ if closeAfterXBars
 if showLong
     strategy.entry('Long', strategy.long, when=entryLong and not shortIsOpen)
     strategy.close('Long', when=exitLong)
-    if useSL
-        strategy.exit('Stop Loss', 'Long', stop=longStop)
+    strategy.exit('Exit', 'Long', stop=useSL ? longStop : na, limit=useTP ? longTP : na)
 if showShort
     strategy.entry('Short', strategy.short, when=entryShort and not longIsOpen)
     strategy.close('Short', when=exitShort, comment='Exit')
-    if useSL
-        strategy.exit('Stop Loss', 'Short', stop=shortStop)
+    strategy.exit('Exit', 'Short', stop=useSL ? shortStop : na, limit=useTP ? shortTP : na)
 
 if entryLong
     label.new(bar_index, low, 'Buy', color=color.green, style=label.style_label_up, textcolor=color.white, size=size.small)

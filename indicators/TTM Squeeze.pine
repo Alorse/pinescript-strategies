@@ -1,16 +1,15 @@
 //
 //@author Alorse
-//@version=4
-study(title="TTM Squeeze [Alorse]")
-length = input(title="Length", type=input.integer, defval=20, minval=0)
-SP = input(title="Short Stop Loss (%)", type=input.float, minval=0.0, step=0.1, defval=10) * 0.01
+//@version=5
+indicator(title='TTM Squeeze [Alorse]')
+length = input.int(title='Length', defval=20, minval=0)
 bband(length, mult) =>
-	sma(close, length) + mult * stdev(close, length)
+    ta.sma(close, length) + mult * ta.stdev(close, length)
 keltner(length, mult) =>
-	ema(close, length) + mult * ema(tr, length)
+    ta.ema(close, length) + mult * ta.ema(ta.tr, length)
 
-e1 = (highest(high, length) + lowest(low, length)) / 2 + sma(close, length)
-osc = linreg(close - e1 / 2, length, 0)
+e1 = (ta.highest(high, length) + ta.lowest(low, length)) / 2 + ta.sma(close, length)
+osc = ta.linreg(close - e1 / 2, length, 0)
 diff = bband(length, 2) - keltner(length, 1)
 osc_color = osc[1] < osc[0] ? osc[0] >= 0 ? color.lime : color.maroon : osc[0] >= 0 ? color.green : color.red
 mid_color = diff >= 0 ? color.white : color.black
