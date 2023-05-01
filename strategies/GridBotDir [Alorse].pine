@@ -1,0 +1,126 @@
+//@version=5
+//------------------------------------------------------------------------------------------------<>
+//      This source code is subject to the terms of the Mozilla Public License 2.0 
+//      https://mozilla.org/MPL/2.0/ 
+//      ©mvs1231 || xxattaxx
+//      Updated 06/05/2021 to fix Transp deprecation
+// indicator('Grid Bot Simulator [Alorse]', shorttitle='GridBotDir [Alorse]', overlay=true)
+strategy("Grid Bot Simulator [Alorse]", shorttitle='GridBotDir [Alorse]', overlay=true, pyramiding=10, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=100000, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.06)
+//-----<Inputs>-----------------------------------------------------------------------------------<> 
+UpperLimit = input.float(48000.0, 'Upper Limit')
+LowerLimit = input.float(45000.0, 'Lower Limit')
+No_Grids = input.int(10, 'Number of Grids(10)') + 1
+Dir = input.string('neutral', 'Market Direction', options=['up', 'neutral', 'down'])
+ShowGrids = input(true, 'Show Grids')
+HighLight = input(true, 'Highlight Trade Zones')
+ShowCurrent = input(false, 'Show Only Current Grids')
+Extremes = input(true, 'High/Low for signals')
+//-----<Variables>--------------------------------------------------------------------------------<>
+LastSignal = 0
+LastSignal_Index = 0
+LastSignal_Time = time
+SignalLine = 0.0
+CurrentGrid = 0.0
+Buy = false
+Sell = false
+Direction = Dir == 'up' ? 1 : Dir == 'down' ? -1 : 0
+//-----<Colors>-----------------------------------------------------------------------------------<>
+RedGrid = color.new(color.red, 90)
+GreenGrid = color.new(color.green, 90)
+Crimson = #DC143C
+LimeGreen = #32CD32
+//-----<Calculate Grids>--------------------------------------------------------------------------<>
+GridRange = UpperLimit - LowerLimit
+GridInterval = GridRange / (No_Grids - 1)
+//-----<Grid Array>-------------------------------------------------------------------------------<>
+a_grid = array.new_float(No_Grids)
+for x = 0 to No_Grids - 1 by 1
+    array.set(a_grid, x, LowerLimit + GridInterval * x)
+//-----<Get Array Function>-----------------------------------------------------------------------<>
+Get_Array_Values(ArrayName, index) =>
+    value = array.get(ArrayName, index)
+    value
+//-----<Calculate Signals>------------------------------------------------------------------------<>
+Get_BuyLine_Index() =>
+    Index = 0
+    BuyValue = 0.0
+    for x = 0 to No_Grids - 1 by 1
+        BuyValue := LowerLimit + GridInterval * x
+        if Extremes
+            Index := high[1] > BuyValue and low <= BuyValue ? x : Index
+        else
+            Index := close[1] > BuyValue and close <= BuyValue ? x : Index
+Get_SellLine_Index() =>
+    Index = 0
+    SellValue = 0.0
+    for x = 0 to No_Grids - 1 by 1
+        SellValue := LowerLimit + GridInterval * x
+        if Extremes
+            Index := low[1] < SellValue and high >= SellValue ? x : Index
+        else
+            Index := close[1] < SellValue and close >= SellValue ? x : Index
+BuyLine_Index = Get_BuyLine_Index()
+SellLine_Index = Get_SellLine_Index()
+//-----<Signals>----------------------------------------------------------------------------------<>
+Buy := BuyLine_Index > 0 ? true : Buy
+Sell := SellLine_Index > 0 ? true : Sell
+//No repeat trades at current level                                                                                     
+if Extremes
+    Buy := low >= SignalLine[1] - GridInterval ? false : Buy
+    Sell := high <= SignalLine[1] + GridInterval ? false : Sell
+    Sell
+else
+    Buy := close >= SignalLine[1] - GridInterval ? false : Buy
+    Sell := close <= SignalLine[1] + GridInterval ? false : Sell
+    Sell
+//No trades outside of grid limits
+Buy := close >= UpperLimit ? false : Buy
+Buy := close < LowerLimit ? false : Buy
+Sell := close <= LowerLimit ? false : Sell
+Sell := close > UpperLimit ? false : Sell
+//Direction Filter (skip one signal if against market direction)
+Buy := Direction == -1 and low >= SignalLine[1] - GridInterval * 2 ? false : Buy
+Sell := Direction == 1 and high <= SignalLine[1] + GridInterval * 2 ? false : Sell
+//-----<Trackers>---------------------------------------------------------------------------------<>
+LastSignal := Buy ? 1 : Sell ? -1 : LastSignal[1]
+LastSignal_Index := Buy ? BuyLine_Index : Sell ? SellLine_Index : LastSignal_Index[1]
+LastSignal_Time := Buy or Sell ? time : LastSignal_Time[1]
+SignalLine := LowerLimit + GridInterval * LastSignal_Index
+//-----<Plot Grids>-------------------------------------------------------------------------------<>
+for i = 1 to No_Grids - 1 by 1
+    Array_Value = Get_Array_Values(a_grid, i)
+    ClosestGrid = Array_Value - close
+    color linecolor = ClosestGrid > 0 ? RedGrid : ClosestGrid < 0 ? GreenGrid : na
+    linecolor := i == LastSignal_Index ? na : linecolor
+    if ShowGrids
+        if ShowCurrent
+            LineAbove = line.new(x1=LastSignal_Time, y1=SignalLine + GridInterval, x2=time + 1000000, y2=SignalLine + GridInterval, color=color.new(color.red, 50), width=1, extend=extend.left, xloc=xloc.bar_time)
+            LineBelow = line.new(x1=LastSignal_Time, y1=SignalLine - GridInterval, x2=time + 1000000, y2=SignalLine - GridInterval, color=color.new(color.green, 50), width=1, extend=extend.left, xloc=xloc.bar_time)
+            LineBelow
+        else
+            color colCurrent = LastSignal == 1 ? color.new(color.green, 95) : color.new(color.red, 95)
+            GridLines = line.new(x1=time, y1=Array_Value, x2=time[1], y2=Array_Value, color=linecolor, width=1, extend=extend.right, xloc=xloc.bar_time)
+            //draw line before latest signal
+            CurrentLine = line.new(x1=LastSignal_Time, y1=SignalLine, x2=LastSignal_Time - 100000, y2=SignalLine, color=colCurrent, width=1, extend=extend.right, xloc=xloc.bar_time)
+            CurrentLine
+UL = ShowGrids and not ShowCurrent
+c1Up = close >= UpperLimit ? color.green : color.red
+c1Lo = close <= LowerLimit ? color.red : color.green
+plot(UL ? UpperLimit : na, color=color.new(c1Up, 50), linewidth=2)
+plot(UL ? LowerLimit : na, color=color.new(c1Lo, 50), linewidth=2)
+//Lines One Above & One Below
+LineAbove = SignalLine == UpperLimit ? SignalLine : SignalLine + GridInterval
+LineBelow = SignalLine == LowerLimit ? SignalLine : SignalLine - GridInterval
+a = plot(LineAbove, color=color.new(color.red, 100), style=plot.style_circles)
+b = plot(LineBelow, color=color.new(color.green, 100), style=plot.style_circles)
+boxColor = LastSignal == -1 ? color.new(color.green, 90) : color.new(color.red, 90)
+boxColor := HighLight ? boxColor : na
+fill(a, b, color=color.new(boxColor, 80))
+
+strategy.entry("Long", strategy.long, when=Buy, comment=str.tostring(SignalLine))
+strategy.entry("Short", strategy.short, when=Sell)
+//-----<Plot Signals>-----------------------------------------------------------------------------<>
+plotchar(Buy, 'Buy', color=color.new(LimeGreen, 0), size=size.tiny, location=location.belowbar, char='▲')
+plotchar(Sell, 'Sell', color=color.new(Crimson, 0), size=size.tiny, location=location.abovebar, char='▼')
+//-----<Alerts>-----------------------------------------------------------------------------------<>
+

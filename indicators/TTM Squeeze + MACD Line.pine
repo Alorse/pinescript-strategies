@@ -1,0 +1,115 @@
+//
+//@author Alorse
+//@version=5
+indicator(title='TTM Squeeze + MACD line [Alorse]')
+length = input.int(title='Length', defval=20, minval=0)
+bband(length, mult) =>
+    ta.sma(close, length) + mult * ta.stdev(close, length)
+keltner(length, mult) =>
+    ta.ema(close, length) + mult * ta.ema(ta.tr, length)
+
+e1 = (ta.highest(high, length) + ta.lowest(low, length)) / 2 + ta.sma(close, length)
+ttm_osc = ta.linreg(close - e1 / 2, length, 0)
+diff = bband(length, 2) - keltner(length, 1)
+ttm_osc_color = ttm_osc[1] < ttm_osc[0] ? ttm_osc[0] >= 0 ? color.lime : color.maroon : ttm_osc[0] >= 0 ? color.green : color.red
+mid_color = diff >= 0 ? color.white : color.black
+
+plot(ttm_osc, color=ttm_osc_color, style=plot.style_area, linewidth=1)
+plot(0, color=mid_color, style=plot.style_circles, linewidth=1)
+
+// MACD Line
+src = input(title='Source', defval=close)
+fast_length = input(title='Fast Length', defval=12)
+slow_length = input(title='Slow Length', defval=26)
+sma_source = input.string(title='Oscillator MA Type', defval='EMA', options=['SMA', 'EMA'])
+
+
+fast_ma = sma_source == 'SMA' ? ta.sma(src, fast_length) : ta.ema(src, fast_length)
+slow_ma = sma_source == 'SMA' ? ta.sma(src, slow_length) : ta.ema(src, slow_length)
+macd = fast_ma - slow_ma
+osc = macd
+
+plot(macd, title='MACD', color=color.new(#2962FF, 10))
+
+//Divergences
+lbR = input.int(title='Pivot Lookback Right', defval=5, group='Divergences')
+lbL = input.int(title='Pivot Lookback Left', defval=5, group='Divergences')
+rangeUpper = input.int(title='Max of Lookback Range', defval=60, group='Divergences')
+rangeLower = input.int(title='Min of Lookback Range', defval=5, group='Divergences')
+plotBull = input.bool(title='Plot Bullish', defval=true, group='Divergences')
+plotBear = input.bool(title='Plot Bearish', defval=true, group='Divergences')
+plotHiddenBull = input.bool(title='Plot Hidden Bullish', defval=false, group='Divergences')
+plotHiddenBear = input.bool(title='Plot Hidden Bearish', defval=false, group='Divergences')
+
+bearColor = color.red
+bullColor = color.green
+hiddenBullColor = color.new(color.yellow, 50)
+hiddenBearColor = color.new(color.yellow, 50)
+textColor = color.white
+noneColor = color.new(color.white, 100)
+
+plFound = na(ta.pivotlow(osc, lbL, lbR)) ? false : true
+phFound = na(ta.pivothigh(osc, lbL, lbR)) ? false : true
+
+_inRange(cond) =>
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+//------------------------------------------------------------------------------
+// Regular Bullish
+
+// Osc: Higher Low
+oscHL = osc[lbR] > ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+
+// Price: Lower Low
+priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+
+bullCond = plotBull and priceLL and oscHL and plFound
+
+plot(plFound ? osc[lbR] : na, offset=-lbR, title='Regular Bullish', linewidth=2, color=bullCond ? bullColor : noneColor)
+// plotshape(bullCond ? osc[lbR] : na,offset=-lbR,title="Regular Bullish Label",text="D",style=shape.labelup,location=location.absolute,color=bullColor,textcolor=textColor,transp=0)
+
+//------------------------------------------------------------------------------
+// Hidden Bullish
+
+// Osc: Lower Low
+oscLL = osc[lbR] < ta.valuewhen(plFound, osc[lbR], 1) and _inRange(plFound[1])
+
+// Price: Higher Low
+priceHL = low[lbR] > ta.valuewhen(plFound, low[lbR], 1)
+
+hiddenBullCond = plotHiddenBull and priceHL and oscLL and plFound
+
+plot(plFound ? osc[lbR] : na, offset=-lbR, title='Hidden Bullish', linewidth=2, color=hiddenBullCond ? hiddenBullColor : noneColor)
+plotshape(hiddenBullCond ? osc[lbR] : na, offset=-lbR, title='Hidden Bullish Label', text='H', style=shape.labelup, location=location.absolute, color=bullColor, textcolor=textColor)
+
+//------------------------------------------------------------------------------
+// Regular Bearish
+
+// Osc: Lower High
+oscLH = osc[lbR] < ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+
+// Price: Higher High
+priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+
+bearCond = plotBear and priceHH and oscLH and phFound
+
+plot(phFound ? osc[lbR] : na, offset=-lbR, title='Regular Bearish', linewidth=2, color=bearCond ? bearColor : noneColor)
+// plotshape(bearCond ? osc[lbR] : na, offset=-lbR, title="Regular Bearish Label", text="⬇", style=shape.labeldown, location=location.absolute, color=color.new(bearColor,100), textcolor=color.new(bearColor, trendBear ? 0 : 50))
+
+//------------------------------------------------------------------------------
+// Hidden Bearish
+
+// Osc: Higher High
+oscHH = osc[lbR] > ta.valuewhen(phFound, osc[lbR], 1) and _inRange(phFound[1])
+
+// Price: Lower High
+priceLH = high[lbR] < ta.valuewhen(phFound, high[lbR], 1)
+
+hiddenBearCond = plotHiddenBear and priceLH and oscHH and phFound
+
+plot(phFound ? osc[lbR] : na, offset=-lbR, title='Hidden Bearish', linewidth=2, color=hiddenBearCond ? hiddenBearColor : noneColor)
+plotshape(hiddenBearCond ? osc[lbR] : na, offset=-lbR, title='Hidden Bearish Label', text='H', style=shape.labeldown, location=location.absolute, color=bearColor, textcolor=textColor)
+
+alertcondition((bullCond ? macd[lbR] : na) or (bearCond ? macd[lbR] : na), 'Divergence', '{"text": "{{ticker}}: Divergence in {{interval}} minutes"}')
+

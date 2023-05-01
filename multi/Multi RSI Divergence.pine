@@ -1,0 +1,116 @@
+//@version=5
+//RSI
+indicator(title='Multi RSI Divergence&Over [Alorse]', overlay=true)
+
+_inRange(cond, rangeUpper, rangeLower) =>
+    bars = ta.barssince(cond == true)
+    rangeLower <= bars and bars <= rangeUpper
+
+RSI_Over(_ticker, rsi_overbought, rsi_oversold, rsi_time) =>
+    rsi = request.security(_ticker, rsi_time, ta.rsi(close, 14))
+
+    cond = rsi > rsi_overbought or rsi < rsi_oversold
+    cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
+    if ta.crossunder(rsi, rsi_oversold)
+        alert('{"text": "🚨 ALERTA 🟢 ' + cleanTicker + ': RSI Sobre vendido en ' + rsi_time + ' minutos"}', alert.freq_once_per_bar_close)
+    if ta.crossover(rsi, rsi_overbought)
+        alert('{"text": "🚨 ALERTA 🔴 ' + cleanTicker + ': RSI Sobre comprado en ' + rsi_time + ' minutos"}', alert.freq_once_per_bar_close)
+
+    [cond, rsi]
+
+screenerFunc(_ticker, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time) =>
+    [cl, lo, hi] = request.security(_ticker, timeframe.period, [close, low, high])
+    rsi = ta.rsi(cl, 14)
+    plFound = na(ta.pivotlow(rsi, lbL, lbR)) ? false : true
+    phFound = na(ta.pivothigh(rsi, lbL, lbR)) ? false : true
+    // Regular Bullish
+    rsiHL = rsi[lbR] > ta.valuewhen(plFound, rsi[lbR], 1) and _inRange(plFound[1], rangeUpper, rangeLower)
+    priceLL = low[lbR] < ta.valuewhen(plFound, low[lbR], 1)
+    bullCond = priceLL and rsiHL and plFound
+    // Regular Bearish
+    rsiLH = rsi[lbR] < ta.valuewhen(phFound, rsi[lbR], 1) and  _inRange(phFound[1], rangeUpper, rangeLower)
+    priceHH = high[lbR] > ta.valuewhen(phFound, high[lbR], 1)
+    bearCond = priceHH and rsiLH and phFound
+    cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
+    if bullCond
+        alert('{"text": "🟢 ' + cleanTicker + ': Divergencia alcista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+    if bearCond
+        alert('{"text": "🔴 ' + cleanTicker + ': Divergencia bajista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+    if alert
+        RSI_Over(_ticker, overbought, oversold, rsi_time)
+
+    [rsi, bullCond, bearCond]
+
+//Divergencias 
+lbR = input.int(title='Pivot Lookback   Right', defval=2, group='Divergencias', inline='pivot')
+lbL = input.int(title='Left', defval=5, group='Divergencias', inline='pivot')
+rangeUpper = input.int(title='Lookback Range   Max', defval=60, group='Divergencias', inline='range')
+rangeLower = input.int(title='Min', defval=6, group='Divergencias', inline='range')
+
+overbought = input(70, title='Sobre   Comprado', group='RSI', inline='rsi')
+oversold = input(30, title='Vendido', group='RSI', inline='rsi')
+rsi_time = input.timeframe(title='Timeframe', defval='15', group='RSI')
+alert = input.bool(true, title='Noticar sobre compra/venta', group='RSI', tooltip='Se enviará una alerta al canal cuando el RSI este sobre comprado/vendido según el parametro anterior.')
+
+// Symbols 
+// There is a limit of 40 security calls so only 40 symbols at the same time is possible
+
+e01 = input.bool(title='', defval=true, group='Symbol 1', inline='s01')
+s01 = input.symbol('BTCUSDT', title='', group='Symbol 1', inline='s01')
+
+e02 = input.bool(title='', defval=true, group='Symbol 2', inline='s02')
+s02 = input.symbol('ETHUSDT', title='', group='Symbol 2', inline='s02')
+
+e03 = input.bool(title='', defval=true, group='Symbol 3', inline='s03')
+s03 = input.symbol('BNBUSDT', title='', group='Symbol 3', inline='s03')
+
+e04 = input.bool(title='', defval=true, group='Symbol 4', inline='s04')
+s04 = input.symbol('ADAUSDT', title='', group='Symbol 4', inline='s04')
+
+e05 = input.bool(title='', defval=true, group='Symbol 5', inline='s05')
+s05 = input.symbol('XRPUSDT', title='', group='Symbol 5', inline='s05')
+
+e06 = input.bool(title='', defval=true, group='Symbol 6', inline='s06')
+s06 = input.symbol('SOLUSDT', title='', group='Symbol 6', inline='s06')
+
+e07 = input.bool(title='', defval=true, group='Symbol 7', inline='s07')
+s07 = input.symbol('DOTUSDT', title='', group='Symbol 7', inline='s07')
+
+e08 = input.bool(title='', defval=true, group='Symbol 8', inline='s08')
+s08 = input.symbol('DOGEUSDT', title='', group='Symbol 8', inline='s08')
+
+e09 = input.bool(title='', defval=true, group='Symbol 9', inline='s09')
+s09 = input.symbol('UNIUSDT', title='', group='Symbol 9', inline='s09')
+
+e10 = input.bool(title='', defval=true, group='Symbol 10', inline='s10')
+s10 = input.symbol('LUNAUSDT', title='', group='Symbol 10', inline='s10')
+
+if e01
+    [rsi01, bullCond01, bearCond01] = screenerFunc(s01, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e02
+    [rsi02, bullCond02, bearCond02] = screenerFunc(s02, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e03
+    [rsi03, bullCond03, bearCond03] = screenerFunc(s03, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e04
+    [rsi04, bullCond04, bearCond04] = screenerFunc(s04, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e05
+    [rsi05, bullCond05, bearCond05] = screenerFunc(s05, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e06
+    [rsi06, bullCond06, bearCond06] = screenerFunc(s06, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e07
+    [rsi07, bullCond07, bearCond07] = screenerFunc(s07, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e08
+    [rsi08, bullCond08, bearCond08] = screenerFunc(s08, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e09
+    [rsi09, bullCond09, bearCond09] = screenerFunc(s09, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)
+
+if e10
+    [rsi10, bullCond10, bearCond10] = screenerFunc(s10, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, alert, rsi_time)

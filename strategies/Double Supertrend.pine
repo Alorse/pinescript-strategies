@@ -1,0 +1,84 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy(title='Double Supertrend [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=10000, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.06)
+
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Dec 01 2021 23:59:59"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2022 23:59:59"), group=btGroup)
+
+inDateRange = time >= startTime and time <= endTime
+
+st_1 = "Supertrend"
+atrPeriod = input(10, "ST1   ATR", group=st_1, inline=st_1)
+factor = input.float(3.0, "Factor", step = 0.1, group=st_1, inline=st_1)
+
+[supertrend, direction] = ta.supertrend(factor, atrPeriod)
+
+inLong = direction < 0
+inShort = direction > 0
+
+upTrend = plot(inLong? supertrend : na, "Up Trend", color=color.new(color.green, 35), style=plot.style_linebr)
+downTrend = plot(inShort ? supertrend : na, "Down Trend", color=color.new(color.red, 35), style=plot.style_linebr)
+
+bodyMiddle = plot((open + close) / 2, display=display.none)
+fill(bodyMiddle, upTrend, color.new(color.green, 92), fillgaps=false)
+fill(bodyMiddle, downTrend, color.new(color.red, 92), fillgaps=false)
+
+st_2 = "Supertrend 2"
+atrPeriod2 = input(10, "ST2   ATR", group=st_1, inline=st_2)
+factor2 = input.float(5.0, "Factor", step = 0.1, group=st_1, inline=st_2)
+
+[supertrend2, direction2] = ta.supertrend(factor2, atrPeriod2)
+
+inLong2 = direction2 < 0
+inShort2 = direction2 > 0
+
+upTrend2 = plot(inLong2? supertrend2 : na, "Up Trend", color=color.new(color.green, 50), style=plot.style_linebr)
+downTrend2 = plot(inShort2 ? supertrend2 : na, "Down Trend", color=color.new(color.red, 50), style=plot.style_linebr)
+
+bodyMiddle2 = plot((open + close) / 2, display=display.none)
+fill(bodyMiddle2, upTrend2, color.new(color.green, 95), fillgaps=false)
+fill(bodyMiddle2, downTrend2, color.new(color.red, 95), fillgaps=false)
+
+// Strategy Conditions
+stratGroup = 'Strategy'
+ifShortLong = input.string(title='Direction', defval='Long', options=['Long', 'Short'], group=stratGroup)
+entryLong = inLong
+exitLong = ta.change(direction2) > 0
+entryShort = inShort
+exitShort = ta.change(direction2) < 0
+
+tpGroup = 'Take Profit'
+useTP = input.string(title='Type', defval='Supertrend', options=['Supertrend', '%'], group=tpGroup, inline=tpGroup, tooltip='Supertrend: Cerrará la operacion cuando el ST en 5 cambie de dirección. \nPercent (%): Cerrará la operacion cuando alcance este porcentaje de ganancia.')
+TPPercent = input.float(1.5, step=0.1, title='%', group=tpGroup, inline=tpGroup)
+
+longTP = 99999999999.9
+shortTP = 0.0
+
+if useTP == '%'
+    longTP := strategy.position_avg_price * (1 + (TPPercent * 0.01))
+    shortTP := strategy.position_avg_price * (1 - (TPPercent * 0.01))
+else
+    longTP := na
+    shortTP := na
+
+// Stop Loss
+slGroup = 'Stop Loss'
+SLPercent = input.float(10, title='Percent', group=slGroup) * 0.01
+
+longStop = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+if ifShortLong == 'Long' and inDateRange
+    strategy.entry("Long", strategy.long, when=entryLong)
+    strategy.close("Long", when=exitLong)
+    strategy.exit("Exit", "Long", limit=longTP, stop=longStop)
+
+if ifShortLong == 'Short' and inDateRange
+    strategy.entry("Short", strategy.short, when=entryShort)
+    strategy.close("Short", when=exitShort or inLong)
+    strategy.exit("Exit", "Short", limit=shortTP, stop=shortStop)
+    

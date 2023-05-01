@@ -1,0 +1,45 @@
+//@version=5
+strategy("EMA Moving away Strategy [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+// Setup EMA && stop loss
+src = input.source(title="Source", defval=close, group="Moving Average")
+length = input.int(55, minval=1, title="Periods", group="Moving Average")
+moving_away = input.float(2, "Moving away (%)", group="Strategy", tooltip="The required percentage that the price moves away from the EMA to open a position.")
+stop_loss_pct = input.float(2, "Stop Loss (%)", group="Stop Loss")
+
+// Get EMA
+ema = ta.ema(src, length)
+
+lc_pct = math.abs((close - open) / open * 100)
+last4CandlesGreen =  ta.highest(close > open, 4) == 4
+
+// Entry and exit conditions for Long position
+long_entry_condition = close <= ema * (1 - moving_away/100) and lc_pct < stop_loss_pct
+
+// Entry and exit conditions for Short position
+short_entry_condition = close >= ema * (1 + moving_away/100) and lc_pct < stop_loss_pct and not last4CandlesGreen
+
+// Entry for Long position
+if long_entry_condition
+    strategy.entry("Long", strategy.long)
+
+// Exit for Long position
+if close >= ema
+    strategy.close("Long")
+
+// Entry for Short position
+if short_entry_condition
+    strategy.entry("Short", strategy.short)
+
+// Exit for Short position
+if close <= ema
+    strategy.close("Short")
+
+// Set Stop Loss
+if strategy.position_size > 0
+    strategy.exit("Long SL", "Long", stop = strategy.position_avg_price * (1 - stop_loss_pct/100))
+if strategy.position_size < 0
+    strategy.exit("Short SL", "Short", stop = strategy.position_avg_price * (1 + stop_loss_pct/100))
+
+// Visualize EMA
+plot(ema, title='EMA Color', color=color.orange)

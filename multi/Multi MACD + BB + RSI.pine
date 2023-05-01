@@ -27,11 +27,11 @@ screenerFunc(_ticker) =>
 
     cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
     if entryLong
-        alert('612e425361de9e0072e37083|AOS_MBR|buy|' + cleanTicker + '|long', alert.freq_once_per_bar_close)
+        alert('{"text": "🟢 ' + cleanTicker + ': Buy ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
         if syminfo.tickerid == _ticker
             label.new(bar_index, lo, "Buy", color=color.green, style=label.style_label_up, textcolor=color.white, size=size.small)
     if exitLong
-        alert('612e425361de9e0072e37083|AOS_MBR|sell|' + cleanTicker + '|flat', alert.freq_once_per_bar_close)
+        alert('{"text": "🔴 ' + cleanTicker + ': Sell ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
         if syminfo.tickerid == _ticker
             label.new(bar_index, hi, "Sell", color=color.red, style=label.style_label_down, textcolor=color.white, size=size.small)
 
@@ -66,7 +66,7 @@ e09 = input.bool(title='', defval=true, group='Symbol 9', inline='s09')
 s09 = input.symbol('UNIUSDT', title='', group='Symbol 9', inline='s09')
 
 e10 = input.bool(title='', defval=true, group='Symbol 10', inline='s10')
-s10 = input.symbol('LUNAUSDT', title='', group='Symbol 10', inline='s10')
+s10 = input.symbol('FTTUSDT', title='', group='Symbol 10', inline='s10')
 
 e11 = input.bool(title='', defval=true, group='Symbol 11', inline='s11')
 s11 = input.symbol('AVAXUSDT', title='', group='Symbol 11', inline='s11')
@@ -135,7 +135,7 @@ e32 = input.bool(title='', defval=true, group='Symbol 32', inline='s32')
 s32 = input.symbol('EOSUSDT', title='', group='Symbol 32', inline='s32')
 
 e33 = input.bool(title='', defval=true, group='Symbol 33', inline='s33')
-s33 = input.symbol('KLAYUSDT', title='', group='Symbol 33', inline='s33')
+s33 = input.symbol('SANDUSDT', title='', group='Symbol 33', inline='s33')
 
 e34 = input.bool(title='', defval=true, group='Symbol 34', inline='s34')
 s34 = input.symbol('AAVEUSDT', title='', group='Symbol 34', inline='s34')
