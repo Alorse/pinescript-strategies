@@ -1,0 +1,168 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © B_L_A_C_K_S_C_O_R_P_I_O_N
+// v 1.1
+
+//@version=5
+strategy('Omar Edited WF', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+
+// *************Appearance*************
+theme = input.string(defval='dark', options=['light', 'dark'], group='Appearance')
+show_fractals = input.bool(false, 'Show Fractals', group='Appearance')
+show_ema = input.bool(false, 'Show EMAs', group='Appearance')
+
+// *************colors*************
+color_green = color.green
+color_red = color.red
+color_yellow = color.yellow
+color_orange = color.orange
+color_blue = color.blue
+color_white = color.white
+
+// *************WF*************
+// Define "n" as the number of periods and keep a minimum value of 2 for error handling.
+n = input.int(title='Fractal Periods', defval=2, minval=2, group='Williams Fractals')
+
+// UpFractal
+bool upflagDownFrontier = true
+bool upflagUpFrontier0 = true
+bool upflagUpFrontier1 = true
+bool upflagUpFrontier2 = true
+bool upflagUpFrontier3 = true
+bool upflagUpFrontier4 = true
+
+for i = 1 to n by 1
+    upflagDownFrontier := upflagDownFrontier and high[n - i] < high[n]
+    upflagUpFrontier0 := upflagUpFrontier0 and high[n + i] < high[n]
+    upflagUpFrontier1 := upflagUpFrontier1 and high[n + 1] <= high[n] and high[n + i + 1] < high[n]
+    upflagUpFrontier2 := upflagUpFrontier2 and high[n + 1] <= high[n] and high[n + 2] <= high[n] and high[n + i + 2] < high[n]
+    upflagUpFrontier3 := upflagUpFrontier3 and high[n + 1] <= high[n] and high[n + 2] <= high[n] and high[n + 3] <= high[n] and high[n + i + 3] < high[n]
+    upflagUpFrontier4 := upflagUpFrontier4 and high[n + 1] <= high[n] and high[n + 2] <= high[n] and high[n + 3] <= high[n] and high[n + 4] <= high[n] and high[n + i + 4] < high[n]
+    upflagUpFrontier4
+flagUpFrontier = upflagUpFrontier0 or upflagUpFrontier1 or upflagUpFrontier2 or upflagUpFrontier3 or upflagUpFrontier4
+
+upFractal = upflagDownFrontier and flagUpFrontier
+
+// downFractal
+bool downflagDownFrontier = true
+bool downflagUpFrontier0 = true
+bool downflagUpFrontier1 = true
+bool downflagUpFrontier2 = true
+bool downflagUpFrontier3 = true
+bool downflagUpFrontier4 = true
+
+for i = 1 to n by 1
+    downflagDownFrontier := downflagDownFrontier and low[n - i] > low[n]
+    downflagUpFrontier0 := downflagUpFrontier0 and low[n + i] > low[n]
+    downflagUpFrontier1 := downflagUpFrontier1 and low[n + 1] >= low[n] and low[n + i + 1] > low[n]
+    downflagUpFrontier2 := downflagUpFrontier2 and low[n + 1] >= low[n] and low[n + 2] >= low[n] and low[n + i + 2] > low[n]
+    downflagUpFrontier3 := downflagUpFrontier3 and low[n + 1] >= low[n] and low[n + 2] >= low[n] and low[n + 3] >= low[n] and low[n + i + 3] > low[n]
+    downflagUpFrontier4 := downflagUpFrontier4 and low[n + 1] >= low[n] and low[n + 2] >= low[n] and low[n + 3] >= low[n] and low[n + 4] >= low[n] and low[n + i + 4] > low[n]
+    downflagUpFrontier4
+flagDownFrontier = downflagUpFrontier0 or downflagUpFrontier1 or downflagUpFrontier2 or downflagUpFrontier3 or downflagUpFrontier4
+
+downFractal = downflagDownFrontier and flagDownFrontier
+
+// plotshape(downFractal and show_fractals, style=shape.triangleup, location=location.belowbar, offset=-n, color=color_green)
+// plotshape(upFractal and show_fractals, style=shape.triangledown, location=location.abovebar, offset=-n, color=color_red)
+
+// *************EMA*************
+len_a = input.int(20, minval=1, title='EMA A   Length', group='Moving Averages', inline="a")
+src_a = input.source(close, title='Source', group='Moving Averages', inline="a")
+out_a = ta.ema(src_a, len_a)
+plot(show_ema ? out_a : na, title='EMA A', color=color_green)
+
+len_b = input.int(50, minval=1, title='EMA B   Length', group='Moving Averages', inline="b")
+src_b = input.source(close, title='Source', group='Moving Averages', inline="b")
+out_b = ta.ema(src_b, len_b)
+ema_b_color = theme == 'dark' ? color_yellow : color_orange
+plot(show_ema ? out_b : na, title='EMA B', color=ema_b_color)
+
+len_c = input.int(100, minval=1, title='EMA C   Length', group='Moving Averages', inline="c")
+src_c = input.source(close, title='Source', group='Moving Averages', inline="c")
+out_c = ta.ema(src_c, len_c)
+ema_c_color = theme == 'dark' ? color_white : color_blue
+plot(show_ema ? out_c : na, title='EMA C', color=ema_c_color)
+
+
+
+// *************RSI*************
+
+len = input.int(14, minval=1, title='Length', group='RSI', inline='rsi')
+src = input.source(close, 'Source', group='RSI', inline='rsi', tooltip='3m chart => RSI in 5m\n5m chart => RSI in 15m\n15m chart => RSI in 45m\n1H chart => RSI in 4H\n4H chart => RSI in 1D\n>1D chart => RSI Auto')
+RSIFunc(len, src) =>
+    up = ta.rma(math.max(ta.change(src), 0), len)
+    down = ta.rma(-math.min(ta.change(src), 0), len)
+    RSI = ta.rsi(src, len)
+
+    RSI
+
+// Timeframe
+timeframeSetUp(number) =>
+    switch number
+        '3' => '5'
+        '5' => '15'
+        '15' => '45'
+        '60' => '240'
+        '240' => 'D'
+        => 'Auto'
+
+NormalRsi = RSIFunc(len, src)
+
+defRes = timeframeSetUp(timeframe.period)
+rsi = request.security(syminfo.tickerid, defRes, NormalRsi)
+
+// *************Calculation*************
+long = out_a > out_b and out_a > out_c and downFractal and low[2] > out_c and rsi[2] < rsi
+// short = (out_a < out_b) and (out_a < out_c) and upFractal and high[2] < out_c and rsi[2] > rsi
+
+// plotshape(long, style=shape.labelup, color=color_green, location=location.belowbar, title='long label', text='L', textcolor=color_white)
+// plotshape(short, style=shape.labeldown, color=color_red, location=location.abovebar, title="short label", text= "S", textcolor=color_white)
+
+// *************End of Signals calculation*************
+
+// Make inputs that set the take profit % (optional)
+longProfitPerc = input.float(title='Long Take Profit (%)', minval=0.0, step=0.1, defval=1.5, group='Orders') * 0.01
+
+// shortProfitPerc = input(title="Short Take Profit (%)",
+    //  type=input.float, minval=0.0, step=0.1, defval=0.5, group="Orders") * 0.01
+
+// Figure out take profit price
+longExitPrice = strategy.position_avg_price * (1 + longProfitPerc)
+// shortExitPrice = strategy.position_avg_price * (1 - shortProfitPerc)
+
+// Plot take profit values for confirmation
+// plot(series=strategy.position_size > 0 ? longExitPrice : na, color=color_green, style=plot.style_circles, linewidth=1, title='Long Take Profit')
+// plot(series=(strategy.position_size < 0) ? shortExitPrice : na,
+    //  color=color_green, style=plot.style_circles,
+    //   linewidth=1, title="Short Take Profit")
+
+// Submit entry orders
+if long and strategy.opentrades == 0
+    strategy.entry(id='🟢', direction=strategy.long)
+
+// if (short and strategy.opentrades == 0)
+    // strategy.entry(id="Short", long=false)
+
+// Set stop loss level with input options (optional)
+longLossPerc = input.float(title='Long Stop Loss (%)', minval=0.0, step=0.1, defval=3.1, group='Orders') * 0.01
+
+// shortLossPerc = input(title="Short Stop Loss (%)",
+    //  type=input.float, minval=0.0, step=0.1, defval=3.1, group="Orders") * 0.01
+
+// Determine stop loss price
+longStopPrice = strategy.position_avg_price * (1 - longLossPerc)
+// shortStopPrice = strategy.position_avg_price * (1 + shortLossPerc)
+
+// Plot stop loss values for confirmation
+// plot(series=strategy.position_size > 0 ? longStopPrice : na, color=color_red, style=plot.style_cross, linewidth=1, title='Long Stop Loss')
+// plot(series=(strategy.position_size < 0) ? shortStopPrice : na,
+    //  color=color_red, style=plot.style_cross,
+    //  linewidth=1, title="Short Stop Loss")
+
+// Submit exit orders based on calculated stop loss price
+if strategy.position_size > 0
+    strategy.exit(id='🔴', limit=longExitPrice, stop=longStopPrice)
+
+// if (strategy.position_size < 0)
+// strategy.exit(id="ExS", limit=shortExitPrice, stop=shortStopPrice)
+

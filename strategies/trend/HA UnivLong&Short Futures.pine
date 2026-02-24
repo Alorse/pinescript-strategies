@@ -1,0 +1,40 @@
+//@version=5
+strategy('HA UnivLong&Short Futures', overlay=false)
+
+// Calculation HA Values
+[haopen, haclose, hahigh, halow] = request.security(ticker.heikinashi(syminfo.tickerid), timeframe.period, [open, close, high, low])
+// HA colors
+hacolor = haclose > haopen ? #26a69a : #ef5350
+
+len = input(title='Period', defval=3)
+smaHigh = ta.sma(hahigh, len)
+smaLow = ta.sma(halow, len)
+Hlv = int(na)
+Hlv := haclose > smaHigh ? 1 : haclose < smaLow ? -1 : Hlv[1]
+sslDown = Hlv < 0 ? smaHigh : smaLow
+sslUp = Hlv < 0 ? smaLow : smaHigh
+
+// Strategy
+sl_inp = input(1.0, title='Stop Loss %')/100
+tp_inp = input(0.3, title='Take Profit %')/100
+ 
+stop_level = strategy.position_avg_price * (1 - sl_inp)
+take_level = strategy.position_avg_price * (1 + tp_inp)
+
+stop_level_short = strategy.position_avg_price * (1 + sl_inp)
+take_level_short = strategy.position_avg_price * (1 - tp_inp)
+
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Dec 01 2021 19:45:00"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
+inDateRange = time >= startTime and time <= endTime
+
+strategy.entry('long', strategy.long, when=ta.crossover(sslUp, sslDown) and inDateRange)
+strategy.entry('short', strategy.short, when=ta.crossover(sslDown, sslUp) and inDateRange)
+strategy.exit('CLOSE_L", "long',  stop=stop_level, limit=take_level)
+strategy.exit('CLOSE_S", "short', stop=stop_level_short, limit=take_level_short)
+
+plotcandle(haopen, hahigh, halow, haclose, title='HA', color=hacolor, wickcolor=hacolor, bordercolor=hacolor)
+plot(sslDown, linewidth=1, color=color.new(color.red, 0))
+plot(sslUp, linewidth=1, color=color.new(color.lime, 0))

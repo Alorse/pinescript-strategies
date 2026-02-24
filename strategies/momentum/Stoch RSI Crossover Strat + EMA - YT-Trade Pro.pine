@@ -1,0 +1,85 @@
+//@version=4
+// Strategy posted by Trade Pro on YT: https://www.youtube.com/watch?v=7NM7bR2mL7U&t=299s
+// This strat uses a 3:1 risk reward ratio, but can be changed by setting the ATR multiplier
+// The script has a time range picker added to back test from a specific date.
+// Best results achieved on EURGBP on 15min 3:1 and USDCAD 30m with a 1:3 RRR
+
+strategy(title="Stoch RSI Crossover Strat + EMA - YT:Trade Pro", shorttitle="Stoch RSI Cross + EMA Strat", overlay = true, pyramiding = 0, calc_on_order_fills = false, commission_type =  strategy.commission.percent, commission_value = 0, default_qty_type = strategy.percent_of_equity, default_qty_value = 100, initial_capital=10000, currency=currency.USD)
+
+// STEP 1:
+// Configure backtest start date with inputs
+startDate = input(title="Start Date", type=input.integer,
+     defval=1, minval=1, maxval=31)
+startMonth = input(title="Start Month", type=input.integer,
+     defval=1, minval=1, maxval=12)
+startYear = input(title="Start Year", type=input.integer,
+     defval=2000, minval=1800, maxval=2100)
+
+// STEP 2:
+// See if this bar's time happened on/after start date
+afterStartDate = (time >= timestamp(syminfo.timezone,
+     startYear, startMonth, startDate, 0, 0))
+
+
+smoothK = input(3, minval=1)
+smoothD = input(3, minval=1)
+lengthRSI = input(14, minval=1)
+lengthStoch = input(14, minval=1)
+src = input(close, title="RSI Source")
+
+rsi1 = rsi(src, lengthRSI)
+k = sma(stoch(rsi1, rsi1, rsi1, lengthStoch), smoothK)
+d = sma(k, smoothD)
+
+//Multi EMA
+emasrc = close, 
+len1 = input(8, minval=1, title="EMA 1")
+len2 = input(14, minval=1, title="EMA 2")
+len3 = input(50, minval=1, title="EMA 3")
+
+ema1 = ema(emasrc, len1)
+ema2 = ema(emasrc, len2)
+ema3 = ema(emasrc, len3)
+
+col1 = color.lime
+col2 = color.blue
+col3 = color.orange
+
+
+//EMA Plots
+plot(ema1, title="EMA 1", linewidth=1, color=col1)
+plot(ema2, title="EMA 2", linewidth=1, color=col2)
+plot(ema3, title="EMA 3", linewidth=1, color=col3)
+
+crossup = k[1] >= d[1] and k[2] <= d[2] and k <= 60 and k >= 10
+barbuy = crossup and ema1 > ema2 and ema2 > ema3 and close > ema1
+crossdown = k[1] <= d[1] and k[2] >= d[2] and k >= 40 and k <= 95
+barsell = crossdown and ema3 > ema2 and ema2 > ema1 and close < ema1
+
+//plotshape(crossup, style=shape.triangleup, location=location.belowbar, color=color.white)
+plotshape(barbuy, style=shape.triangleup, location=location.belowbar, color=color.green)
+//plotshape(crossdown, style=shape.triangledown, location=location.abovebar, color=color.white)
+plotshape(barsell, style=shape.triangledown, location=location.abovebar, color=color.red)
+
+
+if (afterStartDate)
+    strategy.entry("Long", strategy.long, when = barbuy) 
+    strategy.entry("Short", strategy.short, when = barsell) 
+
+lengthATR = input(title="ATR Length", defval=14, minval=1)
+atr_loss = input(title="ATR loss multiplier", defval=3, minval=1)
+atr_profit = input(title="ATR profit multiplier", defval=1, minval=1)
+atr = atr(lengthATR)
+longloss = sma(open, 1)
+longprofit = sma(open, 1)
+shortloss = sma(open, 1)
+shortprofit = sma(open, 1)
+longloss := barbuy ? open - (atr * atr_loss) : longloss[1]
+longprofit := barbuy ?  open + (atr * atr_profit) : longprofit[1]
+shortloss := barsell ? open + (atr * atr_loss) : shortloss[1]
+shortprofit := barsell ? open - (atr * atr_profit) : shortprofit[1]
+
+strategy.exit("exit long", from_entry="Long", stop=longloss, limit=longprofit)
+strategy.exit("exit short", from_entry="Short", stop=shortloss,limit=shortprofit)
+//strategy.close(id="Long", when=crossdown)
+//strategy.close(id="Short", when=crossup)

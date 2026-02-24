@@ -1,0 +1,37 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// alorse
+
+//@version=5
+strategy(title='RSI + EMA [Alorse]', shorttitle='RSI + EMA [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+
+src = input(close, 'Source')
+rsi_length = input(14, title='RSI Length')
+rsi_overbought = input(70, title='RSI Overbought Level')
+rsi_oversold = input(30, title='RSI Overbought Level')
+up = ta.rma(math.max(ta.change(src), 0), rsi_length)
+down = ta.rma(-math.min(ta.change(src), 0), rsi_length)
+rsi = down == 0 ? 100 : up == 0 ? 0 : 100 - 100 / (1 + up / down)
+
+maGroup = "Moving Average 1"
+ma_type = input.string(title='Type', defval='EMA', options=['SMA', 'EMA'], group=maGroup, inline='ma')
+ma_length = input.int(title='Length', defval=150, group=maGroup, inline='ma')
+ma = ma_type == 'SMA' ? ta.sma(src, ma_length) : ta.ema(src, ma_length)
+plot(ma, title=maGroup, color=color.purple)
+
+ma2Group = "Moving Average 2"
+ma2_type = input.string(title='Type', defval='EMA', options=['SMA', 'EMA'], group=ma2Group, inline='ma')
+ma2_length = input.int(title='Length', defval=600, group=ma2Group, inline='ma')
+ma2 = ma2_type == 'SMA' ? ta.sma(src, ma2_length) : ta.ema(src, ma2_length)
+plot(ma2, title=ma2Group, color=color.orange)
+
+
+longEntry = rsi < rsi_oversold and ma > ma2
+shortEntry = rsi > rsi_overbought and ma > ma2
+
+
+strategy.entry('Long', strategy.long, when=longEntry)
+strategy.close('Long', when=rsi > rsi_overbought)
+
+
+strategy.entry('Short', strategy.short, when=shortEntry)
+strategy.close('Short', when=rsi < rsi_oversold)

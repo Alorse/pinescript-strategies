@@ -1,0 +1,58 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// Heikin Ashi Strategy V2 [Alorse] based on breizh29 script
+// © alorse
+
+//@version=4
+strategy("Heikin Ashi Strategy V2 [Alorse]",shorttitle="HAS V2 [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+res = input(title="Timeframe", type=input.resolution, defval="60", group="Heikin Ashi Candle")
+hshift = input(1,title="Timeframe Shift", group="Heikin Ashi Candle")
+res1 = input(title="EMA Timeframe", type=input.resolution, defval="180", group="Heikin Ashi EMA")
+mhshift = input(0,title="EMA Timeframe Shift", group="Heikin Ashi EMA")
+fama = input(1,"EMA Period", group="Heikin Ashi EMA")
+test = input(1,"EMA Shift", group="Heikin Ashi EMA")
+sloma = input(30,"EMA Period", group="Slow EMA")
+slomas = input(1,"EMA Shift", group="Slow EMA")
+
+showShort = input(false, title="Show only Long entries", group="Strategy")
+
+macdf = input(false,title="With MACD filter", group="MACD")
+res2 = input(title="MACD Time Frame", type=input.resolution, defval="15", group="MACD")
+macds = input(1,title="MACD Shift", group="MACD")
+ha_t = heikinashi(syminfo.tickerid)
+ha_close = security(ha_t, res, close[hshift], barmerge.gaps_off, barmerge.lookahead_on)
+mha_close = security(ha_t, res1, close[mhshift], barmerge.gaps_off, barmerge.lookahead_on)
+
+//macd
+[macdLine, signalLine, histLine] = macd(close, 12, 26, 9)
+macdl = security(ha_t,res2,macdLine[macds], barmerge.gaps_off, barmerge.lookahead_on)
+macdsl= security(ha_t,res2,signalLine[macds], barmerge.gaps_off, barmerge.lookahead_on)
+
+//Moving Average
+fma = ema(mha_close[test], fama)
+sma = ema(ha_close[slomas], sloma)
+
+plot(fma,title="MA", color=color.blue, linewidth=1, style=plot.style_line)
+plot(sma,title="SMA", color=color.purple, linewidth=1, style=plot.style_line)
+
+
+//BACKTESTING
+startDate = input(title="Day", type=input.integer, defval=1, minval=1, maxval=31, group="Backtesting starts")
+startMonth = input(title="Month", type=input.integer, defval=7, minval=1, maxval=12, group="Backtesting starts")
+startYear = input(title="Year", type=input.integer, defval=2021, minval=1800, maxval=2100, group="Backtesting starts")
+
+endDate = input(title="Day", type=input.integer, defval=21, minval=1, maxval=31, group="Backtesting ends")
+endMonth = input(title="Month", type=input.integer, defval=12, minval=1, maxval=12, group="Backtesting ends")
+endYear = input(title="Year", type=input.integer, defval=2022, minval=1800, maxval=2100, group="Backtesting ends")
+
+inDateRange = (time >= timestamp(syminfo.timezone, startYear, startMonth, startDate, 0, 0)) and (time < timestamp(syminfo.timezone, endYear, endMonth, endDate, 0, 0))
+
+//Strategy
+golong =  crossover(fma,sma) and (macdl > macdsl or macdf == false)
+goshort =   crossunder(fma,sma) and (macdl < macdsl or macdf == false)
+
+strategy.entry("Buy", strategy.long, when=golong)
+if showShort == false
+    strategy.entry("Sell", strategy.short, when=goshort)
+else
+    strategy.close("Buy", when=goshort)

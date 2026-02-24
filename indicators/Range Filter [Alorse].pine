@@ -1,0 +1,44 @@
+//@version=5
+indicator(title='Range Filter', overlay=true)
+
+// Source
+src = input(defval=close, title='Source')
+per = input.int(defval=100, minval=1, title='Sampling Period')
+mult = input.float(defval=3.0, minval=0.1, title='Range Multiplier')
+
+// Smooth Average Range
+smoothrng(x, t, m) =>
+    wper = t * 2 - 1
+    avrng = ta.ema(math.abs(x - x[1]), t)
+    smoothrng = ta.ema(avrng, wper) * m
+    smoothrng
+smrng = smoothrng(src, per, mult)
+
+// Range Filter
+rngfilt(x, r) =>
+    rngfilt = x
+    rngfilt := x > nz(rngfilt[1]) ? x - r < nz(rngfilt[1]) ? nz(rngfilt[1]) : x - r : x + r > nz(rngfilt[1]) ? nz(rngfilt[1]) : x + r
+    rngfilt
+filt = rngfilt(src, smrng)
+
+// Filter Direction
+upward = 0.0
+upward := filt > filt[1] ? nz(upward[1]) + 1 : filt < filt[1] ? 0 : nz(upward[1])
+downward = 0.0
+downward := filt < filt[1] ? nz(downward[1]) + 1 : filt > filt[1] ? 0 : nz(downward[1])
+
+// Target Bands
+hband = filt + smrng
+lband = filt - smrng
+
+// Colors
+filtcolor = upward > 0 ? color.lime : downward > 0 ? color.red : na
+filtplot = plot(filt, color=filtcolor, linewidth=3, title='Range Filter')
+
+// Target
+hbandplot = plot(hband, color=color.new(color.aqua, 100), title='High Target')
+lbandplot = plot(lband, color=color.new(color.fuchsia, 100), title='Low Target')
+
+// Fills
+fill(hbandplot, filtplot, color=color.new(color.fuchsia, 90), title='High Target Range')
+fill(lbandplot, filtplot, color=color.new(color.fuchsia, 90), title='Low Target Range')

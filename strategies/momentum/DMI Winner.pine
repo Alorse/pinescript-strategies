@@ -1,0 +1,61 @@
+//@version=5
+strategy('Directional Movement Index Winner [Alorse]', shorttitle='DMI Winner [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=20, commission_type=strategy.commission.percent, commission_value=0.01)
+
+txtVer = '0.0.9'
+version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\n')
+src = input(title='Source', defval=close)
+
+// DMI
+dmiGroup = 'Directional Movement Index'
+len = input.int(14, minval=1, title='DI Length', group=dmiGroup)
+lensig = input.int(13, title='ADX Smoothing', minval=1, maxval=50, group=dmiGroup)
+keyLevel = input.int(23, title='key level', group=dmiGroup)
+[diplus, diminus, adx] = ta.dmi(len, lensig)
+
+// Moving Average
+maGroup = 'Moving Average'
+hasMa = input.bool(true, title='╔══════   Use MA   ══════╗', group=maGroup)
+maType = input.string(title='Type', defval='EMA', options=['EMA', 'SMA'], group=maGroup, inline='ma')
+maLen = input.int(55, minval=1, title='Length', group=maGroup, inline='ma')
+ma = maType == 'EMA' ? ta.ema(src, maLen) : ta.sma(src, maLen)
+plot(hasMa ? ma : na, title='Moving Average', linewidth=1, color=color.new(color.blue, 10))
+buyMaFilter = hasMa ? close > ma : true
+sellMaFilter = hasMa ? close < ma : true
+
+// Strategy
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(false, title='Short entries', group=stratGroup)
+
+longCond = diplus > diminus and diplus[1] > diminus[1] and diplus[2] > diminus[2]
+shortCond = diplus < diminus and diplus[1] < diminus[1] and diplus[2] < diminus[2]
+longEntry = longCond and adx > keyLevel and buyMaFilter and close > open
+shortEntry = shortCond and adx > keyLevel and sellMaFilter and close < open
+
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Feb 01 2021 23:59:59"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
+
+inDateRange = time >= startTime and time <= endTime
+
+if showLong and not showShort and inDateRange
+    strategy.entry('Long', strategy.long, when=longEntry)
+    strategy.close('Long', when=shortEntry)
+if not showLong and showShort and inDateRange
+    strategy.entry('Short', strategy.short, when=shortEntry)
+    strategy.close('Short', when=longEntry)
+if showLong and showShort and inDateRange
+    strategy.entry('Long', strategy.long, when=longEntry)
+    strategy.entry('Short', strategy.short, when=shortEntry)
+
+// Stop Loss
+slGroup = 'Stop Loss'
+useSL = input.bool(false, title='╔══════   Enable   ══════╗', group=slGroup)
+SLPercent = input.float(10, title='Percent', group=slGroup) * 0.01
+
+longStop = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+if useSL
+    strategy.exit('Stop Loss', 'Long', stop=longStop)

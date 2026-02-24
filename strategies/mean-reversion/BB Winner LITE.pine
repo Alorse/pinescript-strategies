@@ -1,0 +1,45 @@
+//
+//@author Alorse
+//@version=4
+strategy("Bollinger Bands Winner LITE [Alorse]", shorttitle="BB Winner LITE [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+verTxt = "1.0.4"
+version = input(title="Version", type=input.string, defval=verTxt, options=[verTxt], tooltip="This is informational only, nothing will change.")
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+isBB = input(true, title="╔═════ Show Bollinger Bands ═════╗", group=bbGroup, tooltip="If you don't want to see Bollinger Bands")
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+offset = input(0, "Offset", type = input.integer, minval = -500, maxval = 500, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+plot(isBB ? basis : na, "Basis", color=color.new(color.orange, 75), offset = offset)
+pb1 = plot(isBB ? upper : na, color=color.new(color.lime, 75), title="Upper")
+pb2 = plot(isBB ? lower : na, color=color.new(color.lime, 75), title="Lower")
+fill(pb1, pb2, color=color.new(color.lime, 99), title="Background")
+
+//Strategy Conditions
+showShort = input(false, title="Show Short entries", group="Strategy")
+candleper = input(title="Candle % below/above the BB", type=input.float, minval=1, maxval=100, defval=30, group="Strategy")* 0.01
+candle_size = high-low
+buyzone = (candle_size*candleper) + low
+sellzone = high - (candle_size*candleper)
+
+body_size = close > open ? close - open : open - close
+bs60 = body_size*0.6
+bsBuy = low + bs60
+bsSell = high - bs60
+
+buy = buyzone < lower and not (bsBuy < lower)
+
+strategy.entry("Long", true, when=buy)
+if showShort
+    strategy.entry("Short", false, when=sellzone > upper)
+else 
+    strategy.close("Long", when=sellzone > upper)

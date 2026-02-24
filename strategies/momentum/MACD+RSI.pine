@@ -1,0 +1,53 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © fredoorse
+
+//@version=4
+strategy(title="MACD + RSI Strategy [Alorse]", overlay=true, shorttitle="MACD+RSI STRTG", pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, default_qty_value=100)
+
+src = input(title="Source", type=input.source, defval=close)
+// MACD
+// Getting inputs
+fast_length = input(title="Fast Length", type=input.integer, defval=12, group="MACD")
+slow_length = input(title="Slow Length", type=input.integer, defval=26, group="MACD")
+signal_length = input(title="Signal Smoothing", type=input.integer, minval = 1, maxval = 50, defval = 9, group="MACD")
+sma_source = input(title="Oscillator MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+sma_signal = input(title="Signal Line MA Type", type=input.string, defval="EMA", options=["SMA", "EMA"], group="MACD")
+// Calculating
+fast_ma = sma_source == "SMA" ? sma(src, fast_length) : ema(src, fast_length)
+slow_ma = sma_source == "SMA" ? sma(src, slow_length) : ema(src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == "SMA" ? sma(macd, signal_length) : ema(macd, signal_length)
+
+// RSI
+len = input(14, minval=1, title="Length", group="RSI")
+rsi = rsi(src, len)
+
+// Strategy
+SL = input(title="Stop Loss %", type=input.integer, defval=99, group="Strategy") * 0.01
+TP = input(title="Take Profit %", type=input.integer, defval=10, group="Strategy")
+rsiBack = input(title="Check RSI last # candles", type=input.integer, defval=5, group="Strategy")
+rsiDown = input(title="RSI over sold level", type=input.integer, defval=30, group="Strategy")
+rsiUp = input(title="RSI over bought level", type=input.integer, defval=70, group="Strategy")
+
+wasRsiDown = false
+for i = 1 to rsiBack
+    if rsi[i] <= rsiDown
+        wasRsiDown := true
+        break
+
+wasRsiUp = false
+for i = 1 to rsiBack
+    if rsi[i] >= rsiUp
+        wasRsiUp := true
+        break
+
+bull_cross = crossover(macd, signal) and wasRsiDown
+bear_cross = crossunder(macd, signal) and wasRsiUp
+strategy.entry("Long", strategy.long, when=bull_cross)
+// strategy.entry("Sell", strategy.short, when=bear_cross)
+strategy.close("Long", when=bear_cross)
+
+StopPrice  = strategy.position_avg_price * (1 - SL)
+
+if (strategy.position_size > 0)
+    strategy.exit(id="Exit", stop=StopPrice)

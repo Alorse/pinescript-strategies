@@ -1,0 +1,46 @@
+//@version=4
+strategy("Supertrend [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+stGroup = "Supertrend"
+src = input(hl2, title="Source", group=stGroup)
+Periods = input(title="ATR Period", type=input.integer, defval=10, group=stGroup)
+Multiplier = input(title="ATR Multiplier", type=input.float, step=0.1, defval=3.7, group=stGroup)
+atr= atr(Periods)
+up=src-(Multiplier*atr)
+up1 = nz(up[1],up)
+up := close[1] > up1 ? max(up,up1) : up
+dn=src+(Multiplier*atr)
+dn1 = nz(dn[1], dn)
+dn := close[1] < dn1 ? min(dn, dn1) : dn
+trend = 1
+trend := nz(trend[1], trend)
+trend := trend == -1 and close > dn1 ? 1 : trend == 1 and close < up1 ? -1 : trend
+upPlot = plot(trend == 1 ? up : na, title="Up Signal", style=plot.style_linebr, linewidth=2, color=color.green)
+dnPlot = plot(trend == 1 ? na : dn, title="Down Signal", style=plot.style_linebr, linewidth=2, color=color.red)
+
+
+// Strategy
+stratGroup = "Strategy"
+barsBack = input(title="Bars back", type=input.integer, minval=0, maxval=100, defval=2, group=stratGroup, tooltip="")
+tpFactor = input(title="Take profit factor", type=input.float, minval=0, maxval=100, defval=1.5, group=stratGroup, tooltip="")
+
+buySignal = trend == 1 and trend[1] == -1
+sellSignal = trend == -1 and trend[1] == 1
+float slBuy = 0.0
+slBuy := strategy.position_size == 0 ? lowest(barsBack) : na(slBuy[1]) ? na : slBuy[1]
+float slSell = 0.0
+slSell := strategy.position_size == 0 ? highest(barsBack) : na(slSell[1]) ? na : slSell[1]
+
+entry_price = 0.0
+entry_price := buySignal ? close : sellSignal ? close : na(entry_price[1]) ? na : entry_price[1]
+
+tpBuy = entry_price + ((entry_price - slBuy) * tpFactor)
+tpSell = entry_price - ((slSell - entry_price) * tpFactor)
+
+
+strategy.entry("Long", true, when=buySignal)
+strategy.exit("Exit", "Long", stop=slBuy, limit=tpBuy)
+
+// strategy.entry("Short", false, when=sellSignal)
+// strategy.exit("Exit", "Short", stop=slSell, limit=tpSell)
+

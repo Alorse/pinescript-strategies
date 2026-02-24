@@ -1,0 +1,42 @@
+//
+//@author Alorse
+//@version=4
+// study("Surpasses candle [Alorse]", overlay=true)
+strategy("Exceeded candle [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+
+txtVer = "0.0.1"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+
+// Green candle surpasses the red one
+greenLastCandle = close[1] < open[1] and close > open and close > open[1]
+// Red candle surpasses the green one
+redLastCandle = close[1] > open[1] and close < open and close < open[1]
+
+plotshape(greenLastCandle ? greenLastCandle: na, location=location.belowbar, color=color.green, style=shape.arrowup)
+plotshape(redLastCandle ? redLastCandle: na, location=location.abovebar, color=color.fuchsia, style=shape.arrowdown)
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+pb1 = plot(upper, color=color.new(color.teal, 50), title="Upper")
+pb2 = plot(lower, color=color.new(color.teal, 50), title="Lower")
+fill(pb1, pb2, color=color.new(color.teal, 98), title="Background")
+plot(basis, "Basis", color=color.new(color.orange, 50))
+
+last3red = close[2] < open[2] and close[3] < open[3]
+buyEntry = greenLastCandle and close < basis and not last3red
+buyExit = close > upper
+
+strategy.entry("Long", true, when=buyEntry)
+strategy.close("Long", when=buyExit, comment="Exit")
+
+// strategy.entry("Short", false, when=redLastCandle and close > basis)
+// strategy.close("Short", when=close < lower, comment="Exit")

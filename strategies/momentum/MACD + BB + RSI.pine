@@ -1,0 +1,121 @@
+//
+//@author Alorse
+//@version=5
+strategy('MACD + BB + RSI [Alorse]', shorttitle='MACD + BB + RSI [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+txtVer = '1.0.8'
+version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\nThe MACD line crosses over the signal line.\nRSI less than 50.\nPrice below the BB baseline.\n\nExit conditions:\nRSI greater than 70.\nClosing price higher than upper BB.')
+src = input(title='Source', defval=close)
+
+// MACD
+macdGroup = 'MACD'
+fast_length = input.int(title='Length   Fast', defval=12, group=macdGroup, inline='macdLength')
+slow_length = input.int(title='Slow', defval=26, group=macdGroup, inline='macdLength')
+signal_length = input.int(title='Signal Smoothing', minval=1, maxval=50, defval=9, group=macdGroup)
+sma_source = input.string(title='Oscillator', defval='EMA', options=['SMA', 'EMA'], group=macdGroup, inline='macdMa', tooltip='Moving Average Type')
+sma_signal = input.string(title='Signal Line', defval='EMA', options=['SMA', 'EMA'], group=macdGroup, inline='macdMa', tooltip='Moving Average Type')
+fast_ma = sma_source == 'SMA' ? ta.sma(src, fast_length) : ta.ema(src, fast_length)
+slow_ma = sma_source == 'SMA' ? ta.sma(src, slow_length) : ta.ema(src, slow_length)
+macd = fast_ma - slow_ma
+signal = sma_signal == 'SMA' ? ta.sma(macd, signal_length) : ta.ema(macd, signal_length)
+
+// Bollinger Bands
+bbGroup = 'Bollindger Bands'
+isBB = input.bool(true, title='╔═════ Show Bollinger Bands ═════╗', group=bbGroup, tooltip='If you don\'t want to see Bollinger Bands')
+length = input.int(20, title='Length', group=bbGroup)
+mult = input.float(2.0, title='StdDev', minval=0.001, maxval=5, group=bbGroup)
+offset = input.int(0, 'Offset', minval=-500, maxval=500, group=bbGroup)
+
+basis = ta.sma(src, length)
+dev = mult * ta.stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+plot(isBB ? basis : na, 'Basis', color=color.new(color.orange, 75), offset=offset)
+pb1 = plot(isBB ? upper : na, color=color.new(color.lime, 75), title='Upper')
+pb2 = plot(isBB ? lower : na, color=color.new(color.lime, 75), title='Lower')
+fill(pb1, pb2, color=color.new(color.lime, 99), title='Background')
+
+// RSI
+rsiGroup = 'RSI'
+lenRSI = input.int(14, title='Length', minval=1, group=rsiGroup)
+RSI = ta.rsi(src, lenRSI)
+
+// DMI
+dmiGroup = 'Directional Movement Index'
+isDMI = input.bool(false, title='╔═════ DMI Filter ═════╗', group=dmiGroup, tooltip='Most Percent Profitable, less trades')
+len = input.int(14, minval=1, title='DI Length', group=dmiGroup)
+lensig = input.int(13, title='ADX Smoothing', minval=1, maxval=50, group=dmiGroup)
+keyLevel = input.int(23, title='key level', group=dmiGroup)
+[diplus, diminus, adx] = ta.dmi(len, lensig)
+dmiLongFilter = isDMI ? diplus > diminus or adx < keyLevel : true
+dmiShortFilter = isDMI ? diplus < diminus or adx < keyLevel : true
+
+// Strategy Conditions
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(false, title='Short entries', group=stratGroup)
+entryLong = ta.crossover(macd, signal) and RSI < 50 and close < basis and dmiLongFilter //and close > open
+exitLong = RSI > 70 and close > upper
+entryShort = ta.crossunder(macd, signal) and RSI > 50 and close > basis and dmiShortFilter
+exitShort = RSI < 31 and close < lower
+// doNotClose = input.int(25, title='Do not close trade yet', group=stratGroup, tooltip='Do not close the trade if ADX is lower than "X" and is rising.')
+// exitLong := diplus > diminus and adx < doNotClose and adx[0] > adx[1] and adx[1] > adx[2] ? false : exitLong
+closeAfterXBars = input.bool(false, title='Close after X # bars', group=stratGroup, tooltip='If trade is in profit')
+xBars = input.int(20, title='# bars', group=stratGroup)
+
+//If (#bars since close < lower BB)/2 is greater than green bars, so false.
+longBars = ta.barssince(close < lower)
+greenBars = 0
+if entryLong
+    for i = 1 to longBars by 1
+        greenBars := close[i] > close[i + 1] ? greenBars + 1 : greenBars
+        greenBars
+    entryLong := greenBars >= longBars / 2 - 1 ? true : false
+    entryLong
+// Stop Loss
+slGroup = 'Stop Loss'
+useSL = input.bool(false, title='╔══════   Enable   ══════╗', group=slGroup, tooltip='If you are using this strategy for Scalping or Futures market, we do not recommend using Stop Loss.')
+SLPercent = input.float(10, title='Percent', group=slGroup) * 0.01
+
+longStop = strategy.position_avg_price * (1 - SLPercent)
+shortStop = strategy.position_avg_price * (1 + SLPercent)
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
+
+longIsOpen = strategy.position_size > 0
+shortIsOpen = strategy.position_size < 0
+
+bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+entry_price = ta.valuewhen(bought, open, 0)
+
+var int nPastBars = 0
+if strategy.position_size > 0
+    nPastBars := nPastBars + 1
+    nPastBars
+if strategy.position_size == 0
+    nPastBars := 0
+    nPastBars
+if closeAfterXBars
+    exitLong := nPastBars >= xBars and close > upper and close > entry_price ? true : exitLong
+    exitLong
+
+if showLong
+    strategy.entry('Long', strategy.long, when=entryLong and not shortIsOpen)
+    strategy.close('Long', when=exitLong)
+    strategy.exit('Exit', 'Long', stop=useSL ? longStop : na, limit=useTP ? longTP : na)
+if showShort
+    strategy.entry('Short', strategy.short, when=entryShort and not longIsOpen)
+    strategy.close('Short', when=exitShort, comment='Exit')
+    strategy.exit('Exit', 'Short', stop=useSL ? shortStop : na, limit=useTP ? shortTP : na)
+
+if entryLong
+    label.new(bar_index, low, 'Buy', color=color.green, style=label.style_label_up, textcolor=color.white, size=size.small)
+if exitLong
+    label.new(bar_index, high, 'Sell', color=color.red, style=label.style_label_down, textcolor=color.white, size=size.small)
+

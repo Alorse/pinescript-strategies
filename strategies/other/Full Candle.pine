@@ -1,0 +1,58 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy('Full Candle [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+txtVer = '0.0.1'
+version = input.string(title='Version', defval=txtVer, options=[txtVer], tooltip='This is informational only, nothing will change.\n\nEntry conditions:\n')
+src = input(title='Source', defval=close)
+
+
+// Moving Averages
+lenA = input.int(10, minval=1, title='EMA A Length', group='Moving Averages')
+outA = ta.ema(close, lenA)
+plot(outA, title='EMA A', color=color.purple)
+
+// Strategy
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(true, title='Short entries', group=stratGroup)
+shadowPercent = input.float(5, step=1, title='Shadow Percent', group=stratGroup)
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+
+longTP = useTP ? strategy.position_avg_price * (1 + TPPercent) : na
+shortTP = useTP ? strategy.position_avg_price * (1 - TPPercent) : na
+
+// Stop Loss
+slGroup = 'Stop Loss'
+useSL = input.bool(false, title='╔══════   Enable   ══════╗', group=slGroup)
+SLPercent = input.float(1.8, title='Percent', group=slGroup) * 0.01
+
+longStop = useSL ? strategy.position_avg_price * (1 - SLPercent) : na
+shortStop = useSL ? strategy.position_avg_price * (1 + SLPercent) : na
+
+bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+entry_price = ta.valuewhen(bought, open, 0)
+
+candleSize = high - low
+shadowSize = close > open ? high - close : close - low
+sPer = (shadowSize * 100)/candleSize
+
+
+entryLong = close > open and close > outA and sPer <= shadowPercent
+entryShort = close < open and close < outA and sPer <= shadowPercent
+exitLong = close > (entry_price + entry_price*0.002) and close > open
+exitShort = close < (strategy.position_avg_price - strategy.position_avg_price*0.002) and close < open
+
+if showLong
+    strategy.entry('Long', strategy.long, when=entryLong)
+    strategy.close('Long', when=exitLong)
+    strategy.exit('TP', 'Long', limit=longTP, stop=longStop)
+if showShort
+    strategy.entry('Short', strategy.short, when=entryShort)
+    strategy.close('Short', when=exitShort)
+    strategy.exit('TP', 'Short', limit=shortTP, stop=shortStop)

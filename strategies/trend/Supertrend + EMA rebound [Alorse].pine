@@ -1,0 +1,73 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy(title='Supertrend + EMA rebound [Alorse]', overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=10000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.1)
+
+// Backtesting
+btGroup = "Backtesting"
+startTime = input.time(title="Start time", defval=timestamp("Nov 01 2021 23:59:59"), group=btGroup)
+endTime = input.time(title="End time", defval=timestamp("Feb 01 2099 23:59:59"), group=btGroup)
+
+inDateRange = time >= startTime and time <= endTime
+
+atrPeriod = input(10, "ATR Length")
+factor = input.float(3.0, "Factor", step = 0.1)
+
+[supertrend, direction] = ta.supertrend(factor, atrPeriod)
+
+inLong = direction < 0
+inShort = direction > 0
+
+upTrend = plot(inLong? supertrend : na, "Up Trend", color = color.green, style=plot.style_linebr)
+downTrend = plot(inShort ? supertrend : na, "Down Trend", color = color.red, style=plot.style_linebr)
+
+bodyMiddle = plot((open + close) / 2, display=display.none)
+fill(bodyMiddle, upTrend, color.new(color.green, 90), fillgaps=false)
+fill(bodyMiddle, downTrend, color.new(color.red, 90), fillgaps=false)
+
+// Moving Averages
+len_a = input.int(20, minval=1, title='EMA A Length', group='Moving Average')
+out_a = ta.ema(close, len_a)
+plot(out_a, title='EMA A', color=color.yellow)
+
+lastEntry = strategy.opentrades.entry_price(0)
+// Strategy Conditions
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(true, title='Short entries', group=stratGroup)
+entryLong = ta.change(direction) < 0
+entryLong := entryLong or (inLong and close[1] < out_a and close > out_a and close < lastEntry)
+exitLong = ta.change(direction) > 0
+
+entryShort = ta.change(direction) > 0
+entryShort := entryShort or (inShort and close[1] > out_a and close < out_a and close > lastEntry)
+exitShort = ta.change(direction) < 0
+
+tpGroup = 'Take Profit'
+useTP = input.string(title='Type', defval='Supertrend', options=['Supertrend', '%'], group=tpGroup, tooltip='Supertrend: \nPercent (%): \nRatio:')
+TPPercent = input.float(1.5, step=0.1, title='Percent/Ratio', group=tpGroup)
+
+longTP = 99999999999.9
+shortTP = 0.0
+
+bought = strategy.opentrades[0] == 1 and strategy.position_size[0] > strategy.position_size[1]
+entry_price = ta.valuewhen(bought, open, 0)
+
+if useTP == '%'
+    longTP := strategy.position_avg_price * (1 + (TPPercent * 0.01))
+    shortTP := strategy.position_avg_price * (1 - (TPPercent * 0.01))
+else
+    longTP := na
+    shortTP := na
+
+if showLong and inDateRange
+    strategy.entry("Long", strategy.long, when=entryLong)
+    strategy.close("Long", when=exitLong)
+    strategy.exit("Exit", "Long", limit=longTP)
+
+if showShort and inDateRange
+    strategy.entry("Short", strategy.short, when=entryShort)
+    strategy.close("Short", when=exitShort)
+    strategy.exit("Exit", "Short", limit=shortTP)
+    

@@ -1,0 +1,37 @@
+//@version=5
+strategy(title='TTM Squeeze [Alorse]', overlay=false, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01)
+length = input.int(title='Length', defval=20, minval=0)
+bband(length, mult) =>
+    ta.sma(close, length) + mult * ta.stdev(close, length)
+keltner(length, mult) =>
+    ta.ema(close, length) + mult * ta.ema(ta.tr, length)
+
+e1 = (ta.highest(high, length) + ta.lowest(low, length)) / 2 + ta.sma(close, length)
+osc = ta.linreg(close - e1 / 2, length, 0)
+diff = bband(length, 2) - keltner(length, 1)
+
+osc_color = osc[1] < osc[0] ? osc[0] >= 0 ? color.lime : color.maroon : osc[0] >= 0 ? color.green : color.red
+mid_color = diff >= 0 ? color.white : color.black
+
+len = input.int(14, minval=1, title='Length', group='RSI')
+src = input.source(close, 'Source', group='RSI')
+rsi = ta.rsi(src, len)
+
+tpGroup = 'Take Profit'
+useTP = input.bool(false, title='╔══════   Enable   ══════╗', group=tpGroup)
+TPPercent = input.float(1.2, step=0.1, title='Percent', group=tpGroup) * 0.01
+
+longTP = strategy.position_avg_price * (1 + TPPercent)
+shortTP = strategy.position_avg_price * (1 - TPPercent)
+
+// Strategy
+buy = osc < 0 and osc[1] < osc[0] and osc[2] < osc[0] and ta.crossover(rsi, 30)
+sell = osc > 0 and osc[1] > osc[0] and osc[2] > osc[0] and ta.crossunder(rsi, 70)
+strategy.entry('Long', strategy.long, when=buy)
+strategy.exit('Exit', 'Long', stop=na, limit=longTP)
+
+strategy.entry('Short', strategy.short, when=sell)
+strategy.exit('Exit', 'Short', stop=na, limit=shortTP)
+
+plot(osc, color=osc_color, style=plot.style_area, linewidth=1)
+plot(0, color=mid_color, style=plot.style_circles, linewidth=1)

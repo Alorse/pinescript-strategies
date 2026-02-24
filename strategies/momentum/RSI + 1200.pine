@@ -1,0 +1,55 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy("RSI + 1200 Strategy [Alose]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=100000, default_qty_value=100, commission_type=strategy.commission.percent, commission_value=0.01)
+
+// RSI
+rsiGroup = 'RSI'
+src = input(title='Source', defval=close, group=rsiGroup)
+lenRSI = input.int(14, title='Length', minval=1, group=rsiGroup)
+RSI = ta.rsi(src, lenRSI)
+RSIoverbought = input.int(72, title='Overbought', minval=1, group=rsiGroup, tooltip='The trade will close when the RSI crosses up this point.')
+RSIoversold = input.int(28, title='Oversold', minval=1, group=rsiGroup, tooltip='The trade will close when the RSI crosses below this point.')
+
+// MTF EMA
+maGroup = "MTF Moving Average"
+emaLen = input(title='MA Periods', defval=150, group=maGroup)
+res = input.timeframe(title="Multi Timeframe", defval="120")
+ema = request.security(syminfo.tickerid, res, ta.ema(close, emaLen))
+plot(ema, title="Moving Average", linewidth=1, color=color.yellow)
+
+// Strategy Conditions
+stratGroup = 'Strategy'
+showLong = input.bool(true, title='Long entries', group=stratGroup)
+showShort = input.bool(true, title='Short entries', group=stratGroup)
+SL = input.int(title="Stop Loss %", defval=10, group=stratGroup) * 0.01
+
+secureLong = strategy.position_avg_price * (1 + 0.002)
+secureShort = strategy.position_avg_price * (1 - 0.002)
+
+// Determine trail stop loss prices
+longStopPrice = strategy.position_avg_price * (1 - SL)
+shortStopPrice = strategy.position_avg_price * (1 + SL)
+
+slackLongPercent = close > ema * 1.01 // +1%
+slackShortPercent = close < ema * 0.99 // -1%
+
+fiveLong = close > ema and close < ema * 1.02 and close < open and close[1] < open[1] and close[2] < open[2] //and close[3] < open[3] and close[4] < open[4]
+fiveShort = close < ema and close > ema * 0.99 and close > open and close[1] > open[1] and close[2] > open[2] //and close[3] > open[3] and close[4] > open[4]
+
+entryLong = close > ema and ta.crossover(RSI, RSIoversold) and slackLongPercent
+exitLong = RSI > RSIoverbought or fiveLong
+
+entryShort = close < ema and ta.crossunder(RSI, RSIoverbought) and slackShortPercent
+exitShort = RSI < RSIoversold or fiveShort
+
+if showLong
+    strategy.entry("Long", strategy.long, when=entryLong)
+    strategy.exit("Exit", "Long", stop=longStopPrice)
+    strategy.close("Long", when=exitLong)
+
+if showShort
+    strategy.entry("Short", strategy.short, when=entryShort)
+    strategy.exit("Exit", "Short", stop=shortStopPrice)
+    strategy.close("Short", when=exitShort)

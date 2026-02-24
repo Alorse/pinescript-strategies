@@ -1,0 +1,57 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=5
+strategy("Omar MMR [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=100000, default_qty_value=100, commission_type=strategy.commission.percent)
+
+// RSI
+rsiGroup = 'RSI'
+src = input(title='Source', defval=close, group=rsiGroup, inline=rsiGroup)
+lenRSI = input.int(14, title='Length', minval=1, group=rsiGroup, inline=rsiGroup)
+RSI = ta.rsi(src, lenRSI)
+
+// Moving Averages
+groupEma = 'Moving Averages'
+len_a = input.int(20, minval=1, title='Length   A', group=groupEma, inline=groupEma)
+ema_a = ta.ema(close, len_a)
+plot(ema_a, title='EMA A', color=color.new(color.orange, 10))
+len_b = input.int(50, minval=1, title='B', group=groupEma, inline=groupEma)
+ema_b = ta.ema(close, len_b)
+plot(ema_b, title='EMA B', color=color.new(color.purple, 10))
+len_c = input.int(200, minval=1, title='C', group=groupEma, inline=groupEma)
+ema_c = ta.ema(close, len_c)
+plot(ema_c, title='EMA C', color=color.new(color.green, 10), linewidth=2)
+
+// MACD
+macdGroup = 'MACD'
+fast_ma = input.int(defval=12, minval=1, title='Length   Fast', group=macdGroup, inline=macdGroup)
+slow_ma = input.int(defval=26, minval=1, title='Slow', group=macdGroup, inline=macdGroup)
+signal_length = input.int(defval=9, minval=1, title='Signal', group=macdGroup, inline=macdGroup)
+[macd_line, signal_line, hist_line] = ta.macd(close, fast_ma, slow_ma, signal_length)
+
+longEntry = close > ema_c and ema_a > ema_b and ta.crossover(macd_line, signal_line) and RSI > 29 and RSI < 70
+isLong = strategy.position_size > 0
+
+plot_ln = plot(isLong ? strategy.position_avg_price : na, color=#787b86, style=plot.style_linebr, linewidth=1, title="Entry Price")
+// Take profit
+longProfitPerc = input.float(title="Take Profit (%)", step=0.1, defval=1.5, group="Strategy") * 0.01
+longExitPrice  = strategy.position_avg_price * (1 + longProfitPerc)
+plot_tp = plot(isLong ? longExitPrice : na, color=color.new(#009688, 100), title="Take Profit")
+
+// Stop loss
+longLossPerc = input.float(title="Stop Loss (%)", step=0.1, defval=2.0, group="Strategy") * 0.01
+longStopPrice  = strategy.position_avg_price * (1 - longLossPerc)
+plot_sl = plot(isLong ? longStopPrice : na, color=color.new(#f44336, 100), title="Stop Loss")
+
+fill(plot_ln, plot_tp, title='UpTrend Highligter', color=color.new(#009688, 80))
+fill(plot_ln, plot_sl, title='DownTrend Highligter', color=color.new(#f44336, 80))
+
+am_entry = "🔶Scalping Deal🔶\n \n 🟢**BUY NOW!**🟢\n#" + str.tostring(syminfo.ticker) + "\n\n💰Price " + str.tostring(close) + "\n⬆️Target: " + str.tostring(close * (1 + longProfitPerc)) + "\n❌Stop loss: " + str.tostring(close * (1 - longLossPerc))
+ame_win="**Take Profit**\n#" + str.tostring(syminfo.ticker) + "\n\n✅Price " + str.tostring(longExitPrice)+ "\nYou won : 1.5%"
+ame_loss="**Stop Loss**\n#"  + str.tostring(syminfo.ticker) + "\n\n❌Price " + str.tostring(longStopPrice)  +"\nYou lost : 2%"
+
+exit_msg = close[1] > strategy.position_avg_price ? ame_win : ame_loss
+
+strategy.entry('Long', strategy.long, when=longEntry, alert_message=am_entry)
+strategy.exit('Exit', 'Long', limit=longExitPrice, stop=longStopPrice, alert_message=exit_msg)
+

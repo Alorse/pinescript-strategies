@@ -1,0 +1,44 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © alorse
+
+//@version=4
+strategy(title="Multi Bollinger Bands [Alorse]", shorttitle="Multi BB [Alorse]", overlay=true, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+txtVer = "0.0.2"
+version = input(title="Version", type=input.string, defval=txtVer, options=[txtVer], tooltip="This is informational only, nothing will change.")
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+length = input(20, title="Length", group=bbGroup)
+mult = input(2.0, title="StdDev", minval=0.001, maxval=5, group=bbGroup)
+
+basis = sma(src, length)
+dev = mult * stdev(src, length)
+upper = basis + dev
+lower = basis - dev
+
+pb1 = plot(upper, color=color.new(color.teal, 100), title="Upper")
+pb2 = plot(lower, color=color.new(color.teal, 100), title="Lower")
+
+// MTF Bollinger Bands
+res = input(title="Multi Timeframe", type=input.resolution, defval="15", tooltip="5 minutes => 15 minutes\n15 minutes => 45 minutes")
+mtfUpper = security(syminfo.tickerid, res, upper)
+mtfLower = security(syminfo.tickerid, res, lower)
+
+mpb1 = plot(mtfUpper, color=color.new(color.teal, 100), title="Upper")
+mpb2 = plot(mtfLower, color=color.new(color.teal, 100), title="Lower")
+
+avgUpper = avg(upper, mtfUpper)
+avgLower = avg(lower, mtfLower)
+
+plot(avgUpper, "Upper Basis", color=color.new(color.orange, 60))
+plot(avgLower, "Lower Basis", color=color.new(color.orange, 60))
+
+fill(pb1, mpb1, color=color.new(color.red, 95), title="Background")
+fill(pb2, mpb2, color=color.new(color.teal, 95), title="Background")
+
+strategy.entry("Long", true, when=close < avgLower)
+strategy.close("Long", when=close > upper)
+
+//strategy.entry("Short", false, when=close > avgUpper)

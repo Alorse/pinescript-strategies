@@ -1,0 +1,51 @@
+//@version=4
+strategy("Williams Vix Fix Strategy [Alorse]", shorttitle="WVF STRTG [Alorse]", overlay=false, pyramiding=0, currency=currency.USD, default_qty_type=strategy.percent_of_equity, initial_capital=1000, default_qty_value=10, commission_type=strategy.commission.percent, commission_value=0.01) 
+
+// Bollinger Bands
+bbGroup = "Bollindger Bands"
+src = input(title="Source", type=input.source, defval=close, group=bbGroup)
+bbl = input(20, title="Length", group=bbGroup)
+mult = input(2.0, minval=1, maxval=5, title="Standard Deviation", group=bbGroup)
+
+basis = sma(src, bbl)
+dev = mult * stdev(src, bbl)
+upper = basis + dev
+lower = basis - dev
+
+// Williams Vix Fix
+wvfGroup = "Williams Vix Fix"
+pd = input(20, title="LookBack Period StdDev", tooltip="LookBack Period Standard Deviation", group=wvfGroup)
+lb = input(50, title="LookBack Period Percentile", group=wvfGroup)
+ph = input(85, title="Highest Percentile", group=wvfGroup) * 0.01
+pl = input(99, title="Lowest Percentile", group=wvfGroup)*0.01
+
+wvf = ((highest(close, pd)-low)/(highest(close, pd)))*100
+sDev = mult * stdev(wvf, bbl)
+midLine = sma(wvf, bbl)
+upperBand = midLine + sDev
+rangeHigh = highest(wvf, lb) * ph
+colNormal = wvf >= upperBand or wvf >= rangeHigh ? color.lime : color.new(color.silver, 20)
+
+
+wvfInv = ((high-lowest(close, pd))/lowest(close, pd))*100
+sDevInv = mult * stdev(wvfInv, bbl)
+midLineInv = sma(wvfInv, bbl)
+upperBandInv = midLineInv + sDevInv
+rangeHighInv = lowest(wvfInv, lb) * pl
+colInv = wvfInv <= upperBandInv or wvfInv <= rangeHighInv ? color.new(color.silver, 20) : color.orange
+
+sellCond = (wvfInv <= upperBandInv or wvfInv <= rangeHighInv) and (wvfInv[1] <= upperBandInv[1] or wvfInv[1] <= rangeHighInv[1]) and close < upper ? false : true
+
+buy = (wvf >= upperBand or wvf >= rangeHigh) and (wvf[1] >= upperBand[1] or wvf[1] >= rangeHigh[1]) and close < lower
+sell = sellCond and close > upper
+
+strategy.entry("Long", true, when=buy)
+strategy.close("Long", when=sell)
+
+plot(wvf, title="Williams Vix Fix", style=plot.style_columns, color=colNormal)
+plot(upperBand, title="Normal StdDev line", style=plot.style_line, linewidth=1,color=color.blue)
+
+plot(0, title="Cero line", color=color.white, style=plot.style_line)
+
+plot(wvfInv*-1, title="Williams Vix Fix Inverted", style=plot.style_columns, color=colInv)
+plot(upperBandInv*-1, title="Inverted StdDev line", style=plot.style_line, linewidth=1,color=color.blue)
