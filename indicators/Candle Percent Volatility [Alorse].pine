@@ -11,4 +11,4 @@ percent_change = ((close - open) * 100) / open
 plot(percent_volatility, color=color.new(color.teal, percent_volatility > change ? 0 : 70), title='Low/High', style=plot.style_columns)
 plot(percent_change, color=color.new(color.orange, math.abs(percent_change) > change ? 0 : 70), title='Open/Close', style=plot.style_columns)
 if math.abs(percent_change) > change
-    alert('{"text": "' + cleanTicker + ': Cambió ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+    alert('{"text": "' + syminfo.ticker + ': Changed ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)

@@ -27,7 +27,7 @@ timeframeSetUp(number) =>
         '180' => '3H'
         '240' => '4H'
         'D' => '1D'
-        => number + ' minutos'
+        => number + ' minutes'
 
 screenerFunc(_ticker, atrP, fac) =>
     [cl, hl, lo, hi] = request.security(_ticker, timeframe.period, [close, hl2, low, high])
@@ -47,11 +47,11 @@ screenerFunc(_ticker, atrP, fac) =>
     cleanTicker = str.replace_all(_ticker, 'BINGBON:', '')
 
     if trend == 1 and trend[1] == -1
-        alert('{"text": "🟢 COMPRA EN ' + cleanTicker + ' - ' + inHours + '"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🟢 BUY IN ' + cleanTicker + ' - ' + inHours + '"}', alert.freq_once_per_bar_close)
         if syminfo.tickerid == _ticker
             label.new(bar_index, lo, "Buy", color=color.green, style=label.style_label_up, textcolor=color.white, size=size.small)
     if trend == -1 and trend[1] == 1
-        alert('{"text": "🔴 VENTA EN ' + cleanTicker + ' - ' + inHours + '"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🔴 SELL IN ' + cleanTicker + ' - ' + inHours + '"}', alert.freq_once_per_bar_close)
         if syminfo.tickerid == _ticker
             label.new(bar_index, hi, "Sell", color=color.red, style=label.style_label_down, textcolor=color.white, size=size.small)
     

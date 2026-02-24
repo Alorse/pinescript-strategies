@@ -12,9 +12,9 @@ RSI_Over(_ticker, rsi_overbought, rsi_oversold, rsi_time) =>
     cond = rsi > rsi_overbought or rsi < rsi_oversold
     cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
     if ta.crossunder(rsi, rsi_oversold)
-        alert('{"text": "🚨 ALERTA 🟢 ' + cleanTicker + ': RSI Sobre vendido en ' + rsi_time + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🚨 ALERT 🟢 ' + cleanTicker + ': RSI Oversold on ' + rsi_time + ' minutes"}', alert.freq_once_per_bar_close)
     if ta.crossover(rsi, rsi_overbought)
-        alert('{"text": "🚨 ALERTA 🔴 ' + cleanTicker + ': RSI Sobre comprado en ' + rsi_time + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🚨 ALERT 🔴 ' + cleanTicker + ': RSI Overbought on ' + rsi_time + ' minutes"}', alert.freq_once_per_bar_close)
 
     [cond, rsi]
 
@@ -33,26 +33,26 @@ screenerFunc(_ticker, lbR, lbL, rangeUpper, rangeLower, overbought, oversold, al
     bearCond = priceHH and rsiLH and phFound
     cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
     if bullCond
-        alert('{"text": "🟢 ' + cleanTicker + ': Divergencia alcista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🟢 ' + cleanTicker + ': Bullish Divergence on ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
     if bearCond
-        alert('{"text": "🔴 ' + cleanTicker + ': Divergencia bajista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🔴 ' + cleanTicker + ': Bearish Divergence on ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
     if alert
         RSI_Over(_ticker, overbought, oversold, rsi_time)
 
     [rsi, bullCond, bearCond]
 
-//Divergencias 
-lbR = input.int(title='Pivot Lookback   Right', defval=2, group='Divergencias', inline='pivot')
-lbL = input.int(title='Left', defval=5, group='Divergencias', inline='pivot')
-rangeUpper = input.int(title='Lookback Range   Max', defval=60, group='Divergencias', inline='range')
-rangeLower = input.int(title='Min', defval=6, group='Divergencias', inline='range')
+//Divergences
+lbR = input.int(title='Pivot Lookback Right', defval=2, group='Divergences', inline='pivot')
+lbL = input.int(title='Left', defval=5, group='Divergences', inline='pivot')
+rangeUpper = input.int(title='Lookback Range Max', defval=60, group='Divergences', inline='range')
+rangeLower = input.int(title='Min', defval=6, group='Divergences', inline='range')
 
-overbought = input(70, title='Sobre   Comprado', group='RSI', inline='rsi')
-oversold = input(30, title='Vendido', group='RSI', inline='rsi')
+overbought = input(70, title='Overbought', group='RSI', inline='rsi')
+oversold = input(30, title='Oversold', group='RSI', inline='rsi')
 rsi_time = input.timeframe(title='Timeframe', defval='15', group='RSI')
-alert = input.bool(true, title='Noticar sobre compra/venta', group='RSI', tooltip='Se enviará una alerta al canal cuando el RSI este sobre comprado/vendido según el parametro anterior.')
+alert = input.bool(true, title='Notify overbought/oversold', group='RSI', tooltip='An alert will be sent when RSI is overbought/oversold according to the parameter above.')
 
-// Symbols 
+// Symbols
 // There is a limit of 40 security calls so only 40 symbols at the same time is possible
 
 e01 = input.bool(title='', defval=true, group='Symbol 1', inline='s01')

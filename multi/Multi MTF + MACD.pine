@@ -27,9 +27,9 @@ screenerFunc(_ticker, lbR, lbL, rangeUpper, rangeLower) =>
     entryShort = bearCond and trendBear
     cleanTicker = str.replace_all(_ticker, 'BINANCE:', '')
     if entrylong
-        alert('{"text": "🟢 ' + cleanTicker + ': Divergencia alcista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🟢 ' + cleanTicker + ': Bullish Divergence on ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
     if entryShort
-        alert('{"text": "🔴 ' + cleanTicker + ': Divergencia bajista en ' + timeframe.period + ' minutos"}', alert.freq_once_per_bar_close)
+        alert('{"text": "🔴 ' + cleanTicker + ': Bearish Divergence on ' + timeframe.period + ' minutes"}', alert.freq_once_per_bar_close)
 
     [macd, entrylong, entryShort]
 
