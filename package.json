@@ -1,0 +1,15 @@
+{
+  "name": "pinescript-strategies",
+  "version": "1.0.0",
+  "description": "Collection of technical indicators and trading strategies for TradingView, with automated syntax validation and backtesting via PineTS.",
+  "type": "module",
+  "scripts": {
+    "backtest": "node scripts/backtest.mjs",
+    "validate": "node scripts/validate.mjs",
+    "report": "node scripts/report.mjs"
+  },
+  "devDependencies": {
+    "pinets": "0.9.32"
+  },
+  "license": "MIT"
+}
