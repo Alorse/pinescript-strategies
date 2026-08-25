@@ -2,15 +2,15 @@
 /**
  * Backtest harness for pinescript-strategies.
  *
- * Runs every Pine Script v5/v6 `strategy()` in the repo against a fixed,
- * committed BTCUSDT daily snapshot (data/BTCUSDT-1d.json) using PineTS, and
- * extracts TradingView-equivalent risk metrics: trades, win-rate, net profit,
- * max drawdown %, Sharpe, Sortino, CAGR.
+ * Runs every Pine Script v5/v6 `strategy()` in the repo against every committed
+ * OHLCV snapshot in data/ (e.g. BTCUSDT-1d.json, BTCUSDT-1d-2025-2026.json)
+ * using PineTS, and extracts TradingView-equivalent risk metrics: trades,
+ * win-rate, net profit %, max drawdown %, Sharpe, Sortino, CAGR.
  *
- * Reproducible: no network access — the OHLCV snapshot is committed to the repo.
+ * Reproducible: no network access — snapshots are committed to the repo.
  *
  * Usage:  node scripts/backtest.mjs
- * Output: data/backtest-results.json  +  BACKTEST.md
+ * Output: data/backtest-results.json  +  BACKTEST.md (via scripts/report.mjs)
  */
 import { PineTS } from 'pinets';
 import fs from 'node:fs';
@@ -20,9 +20,7 @@ import { transformWhen } from './lib/pine-when-transform.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const DATA_FILE = path.join(ROOT, 'data', 'BTCUSDT-1d.json');
-
-const candles = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+const DATA_DIR = path.join(ROOT, 'data');
 
 function walk(dir) {
   let out = [];
@@ -34,6 +32,12 @@ function walk(dir) {
   return out;
 }
 
+function dataFiles() {
+  return fs.readdirSync(DATA_DIR)
+    .filter((f) => /^BTCUSDT-.*\.json$/.test(f))
+    .sort();
+}
+
 function classify(src) {
   const verMatch = src.match(/\/\/@version\s*=\s*(\d+)/);
   const version = verMatch ? parseInt(verMatch[1], 10) : null;
@@ -42,10 +46,10 @@ function classify(src) {
   return { version, isStrategy, isIndicator };
 }
 
-async function backtestOne(relPath) {
+async function backtestOne(relPath, candles) {
   const fp = path.join(ROOT, relPath);
   const src = fs.readFileSync(fp, 'utf8');
-  const { version, isStrategy, isIndicator } = classify(src);
+  const { version, isStrategy } = classify(src);
 
   const base = { file: relPath, version, type: isStrategy ? 'strategy' : 'indicator' };
 
@@ -55,7 +59,7 @@ async function backtestOne(relPath) {
 
   // PineTS v0.9.32 does not implement `when=` — rewrite to `if` blocks so
   // entry/exit conditions are actually respected (see lib/pine-when-transform.mjs).
-  const { code, changed } = transformWhen(src);
+  const { code } = transformWhen(src);
 
   const pine = new PineTS(candles);
   try {
@@ -98,31 +102,37 @@ async function backtestOne(relPath) {
 
 async function main() {
   const files = walk(ROOT).map((f) => path.relative(ROOT, f)).sort();
-  const results = [];
-  for (const f of files) {
-    const r = await backtestOne(f);
-    results.push(r);
-    const mark = r.status === 'ok' ? 'OK ' : r.status === 'syntax-error' ? 'SYN' : r.status === 'v4-unsupported' ? 'V4 ' : r.status === 'indicator' ? 'IND' : r.status === 'runtime-error' ? 'RUN' : '???';
-    const extra = r.status === 'ok' ? ` trades=${r.trades} winRate=${r.winRate}% dd=${r.maxDrawdownPct}% sharpe=${r.sharpe}` : ` (${r.error})`;
-    console.log(`[${mark}] ${f}${extra}`);
+  const periods = [];
+
+  for (const df of dataFiles()) {
+    const candles = JSON.parse(fs.readFileSync(path.join(DATA_DIR, df), 'utf8'));
+    const results = [];
+    for (const f of files) results.push(await backtestOne(f, candles));
+    const ok = results.filter((r) => r.status === 'ok');
+    periods.push({
+      file: df,
+      symbol: 'BTCUSDT',
+      timeframe: '1d',
+      bars: candles.length,
+      range: [candles[0].openTime, candles[candles.length - 1].openTime],
+      counts: {
+        total: results.length,
+        backtested: ok.length,
+        indicators: results.filter((r) => r.status === 'indicator').length,
+        v4: results.filter((r) => r.status === 'v4-unsupported').length,
+        syntaxErrors: results.filter((r) => r.status === 'syntax-error').length,
+        runtimeErrors: results.filter((r) => r.status === 'runtime-error').length,
+      },
+      results,
+    });
+    console.log(`[${df}] backtested ${ok.length}/${files.length} strategies`);
   }
 
-  const ok = results.filter((r) => r.status === 'ok');
-  const summary = {
-    generatedAt: new Date().toISOString(),
-    data: { file: 'data/BTCUSDT-1d.json', symbol: 'BTCUSDT', timeframe: '1d', bars: candles.length, range: [candles[0].openTime, candles[candles.length - 1].openTime] },
-    counts: {
-      total: results.length,
-      backtested: ok.length,
-      indicators: results.filter((r) => r.status === 'indicator').length,
-      v4: results.filter((r) => r.status === 'v4-unsupported').length,
-      syntaxErrors: results.filter((r) => r.status === 'syntax-error').length,
-      runtimeErrors: results.filter((r) => r.status === 'runtime-error').length,
-    },
-    results,
-  };
-  fs.writeFileSync(path.join(ROOT, 'data', 'backtest-results.json'), JSON.stringify(summary, null, 2));
-  console.log(`\nBacktested ${ok.length}/${files.length} strategies. Full JSON -> data/backtest-results.json`);
+  fs.writeFileSync(
+    path.join(DATA_DIR, 'backtest-results.json'),
+    JSON.stringify({ generatedAt: new Date().toISOString(), periods }, null, 2),
+  );
+  console.log(`\nDone. ${periods.length} period(s) -> data/backtest-results.json`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
