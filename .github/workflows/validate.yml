@@ -1,0 +1,43 @@
+name: Validate & Backtest
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate Pine Script syntax
+        run: node scripts/validate.mjs
+
+      - name: Run backtests
+        run: node scripts/backtest.mjs
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pine-results
+          path: |
+            data/backtest-results.json
+            data/validation-results.json
+          retention-days: 14
