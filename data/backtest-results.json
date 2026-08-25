@@ -1,0 +1,745 @@
+{
+  "generatedAt": "2026-08-25T05:25:18.467Z",
+  "data": {
+    "file": "data/BTCUSDT-1d.json",
+    "symbol": "BTCUSDT",
+    "timeframe": "1d",
+    "bars": 731,
+    "range": [
+      1640995200000,
+      1704067200000
+    ]
+  },
+  "counts": {
+    "total": 74,
+    "backtested": 17,
+    "indicators": 17,
+    "v4": 31,
+    "syntaxErrors": 2,
+    "runtimeErrors": 7
+  },
+  "results": [
+    {
+      "file": "indicators/3 MA + Cross.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/3 MTF EMA:SMA.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/5 EMA SMA + Cross.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/BB + 3EMA.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/BB Winner.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/Candle Percent Volatility [Alorse].pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/DMI + RSI Cross.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/DMI.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/KDJ.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/MACD Divergence.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/MACD.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/MTF+MACD.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/PivotHighLow.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "indicators/RSI Divergence.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/Range Filter [Alorse].pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/SuperTrend FromScrash.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/TTM Squeeze + MACD Line.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/TTM Squeeze.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "indicators/Williams Vix Fix + Inverse.pine",
+      "version": 4,
+      "type": "indicator",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "multi/Alert BB + RSI.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "multi/Multi Alert Long:Short.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "multi/Multi MACD + BB + RSI.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "multi/Multi MTF + MACD.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "multi/Multi RSI Divergence.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "multi/Multi Supertrend.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "multi/RSI Multi Alerts.pine",
+      "version": 5,
+      "type": "indicator",
+      "status": "indicator",
+      "error": "indicator() script — no trades to backtest"
+    },
+    {
+      "file": "strategies/MTF BB.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/MTF RSI.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 0,
+      "closed": 0,
+      "open": 0,
+      "wins": 0,
+      "losses": 0,
+      "winRate": null,
+      "netProfit": 0,
+      "netProfitPct": 0,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 0,
+      "sharpe": 0,
+      "sortino": -1,
+      "cagr": 0
+    },
+    {
+      "file": "strategies/MTF+MACD.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/MacdNew.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/grid/GridBotDir [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 0,
+      "closed": 0,
+      "open": 0,
+      "wins": 0,
+      "losses": 0,
+      "winRate": null,
+      "netProfit": 0,
+      "netProfitPct": 0,
+      "initialCapital": 100000,
+      "maxDrawdownPct": 0,
+      "sharpe": 0,
+      "sortino": -1,
+      "cagr": 0
+    },
+    {
+      "file": "strategies/mean-reversion/BB + Aroon.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 2,
+      "closed": 2,
+      "open": 0,
+      "wins": 0,
+      "losses": 2,
+      "winRate": 0,
+      "netProfit": -71961.82,
+      "netProfitPct": -7.2,
+      "initialCapital": 1000000,
+      "maxDrawdownPct": 14.7,
+      "sharpe": -0.181,
+      "sortino": -0.19,
+      "cagr": -3.67
+    },
+    {
+      "file": "strategies/mean-reversion/BB Divergence.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/mean-reversion/BB Winner LITE.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/mean-reversion/BB Winner PRO.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 2,
+      "closed": 2,
+      "open": 0,
+      "wins": 2,
+      "losses": 0,
+      "winRate": 100,
+      "netProfit": 25.04,
+      "netProfitPct": 2.5,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 1.47,
+      "sharpe": -0.117,
+      "sortino": -0.217,
+      "cagr": 1.24
+    },
+    {
+      "file": "strategies/mean-reversion/Bollinger Breakout [kodify].pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/mean-reversion/Exceeded candle.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/mean-reversion/MEMA + BB + RSI [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/mean-reversion/Multi BB.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/2 EMA:SMA + RSI.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/DMI Winner.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 5,
+      "closed": 4,
+      "open": 1,
+      "wins": 1,
+      "losses": 3,
+      "winRate": 20,
+      "netProfit": -27.42,
+      "netProfitPct": -2.74,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 7.19,
+      "sharpe": 0.092,
+      "sortino": 0.165,
+      "cagr": -1.38
+    },
+    {
+      "file": "strategies/momentum/Double RSI.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/momentum/MACD + BB + RSI.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 2,
+      "closed": 2,
+      "open": 0,
+      "wins": 1,
+      "losses": 1,
+      "winRate": 50,
+      "netProfit": -27.67,
+      "netProfitPct": -2.77,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 4.71,
+      "sharpe": -0.29,
+      "sortino": -0.294,
+      "cagr": -1.39
+    },
+    {
+      "file": "strategies/momentum/MACD + DMI.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/MACD Long Strategy [Bunghole].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'mintick')"
+    },
+    {
+      "file": "strategies/momentum/MACD+RSI.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/QQE signals.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/RSI + 1200.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/momentum/RSI + EMA.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 2,
+      "closed": 1,
+      "open": 1,
+      "wins": 1,
+      "losses": 0,
+      "winRate": 50,
+      "netProfit": 24.42,
+      "netProfitPct": 2.44,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 9.89,
+      "sharpe": -0.572,
+      "sortino": -0.501,
+      "cagr": 1.21
+    },
+    {
+      "file": "strategies/momentum/Stoch RSI Crossover Strat + EMA - YT-Trade Pro.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/StochRSI + Supertrend Strategy.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/momentum/TTM Squeeze.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 7,
+      "closed": 6,
+      "open": 1,
+      "wins": 6,
+      "losses": 0,
+      "winRate": 85.7,
+      "netProfit": 7.09,
+      "netProfitPct": 0.71,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 2.57,
+      "sharpe": -0.675,
+      "sortino": -0.566,
+      "cagr": 0.35
+    },
+    {
+      "file": "strategies/momentum/Williams Vix Fix.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/other/Flawless Victory.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/other/Full Candle.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 17,
+      "closed": 16,
+      "open": 1,
+      "wins": 13,
+      "losses": 3,
+      "winRate": 76.5,
+      "netProfit": 87.48,
+      "netProfitPct": 8.75,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 3.08,
+      "sharpe": 0.175,
+      "sortino": 0.408,
+      "cagr": 4.28
+    },
+    {
+      "file": "strategies/other/Improvising [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 13,
+      "closed": 13,
+      "open": 0,
+      "wins": 9,
+      "losses": 4,
+      "winRate": 69.2,
+      "netProfit": 18.51,
+      "netProfitPct": 1.85,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 0.4,
+      "sharpe": -0.391,
+      "sortino": -0.494,
+      "cagr": 0.92
+    },
+    {
+      "file": "strategies/other/Javo v1 [Repaint].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/other/Omar Edited WF.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "syntax-error",
+      "error": "Failed to transpile Pine Script version 5: Unexpected token INDENT '' at 127:5"
+    },
+    {
+      "file": "strategies/other/Omar MMR [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'ticker')"
+    },
+    {
+      "file": "strategies/other/Password protected.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/other/Pin Bar Magic v1.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/other/StratBase.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "syntax-error",
+      "error": "Failed to transpile Pine Script version 5: Unexpected token OPERATOR '=' at 21:13"
+    },
+    {
+      "file": "strategies/other/Strategy Tester [Lupown].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 37,
+      "closed": 37,
+      "open": 0,
+      "wins": 19,
+      "losses": 18,
+      "winRate": 51.4,
+      "netProfit": 80.39,
+      "netProfitPct": 8.04,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 3.17,
+      "sharpe": 0.14,
+      "sortino": 0.291,
+      "cagr": 3.94
+    },
+    {
+      "file": "strategies/other/TTM Squeeze EMA Strategy [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 0,
+      "closed": 0,
+      "open": 0,
+      "wins": 0,
+      "losses": 0,
+      "winRate": null,
+      "netProfit": 0,
+      "netProfitPct": 0,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 0,
+      "sharpe": 0,
+      "sortino": -1,
+      "cagr": 0
+    },
+    {
+      "file": "strategies/trend/3 EMA:SMA + Cross.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/trend/Double Supertrend.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 0,
+      "closed": 0,
+      "open": 0,
+      "wins": 0,
+      "losses": 0,
+      "winRate": null,
+      "netProfit": 0,
+      "netProfitPct": 0,
+      "initialCapital": 10000,
+      "maxDrawdownPct": 0,
+      "sharpe": 0,
+      "sortino": -1,
+      "cagr": 0
+    },
+    {
+      "file": "strategies/trend/EMA Moving away Strategy [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 95,
+      "closed": 94,
+      "open": 1,
+      "wins": 21,
+      "losses": 73,
+      "winRate": 22.1,
+      "netProfit": 15.43,
+      "netProfitPct": 1.54,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 3.95,
+      "sharpe": -0.119,
+      "sortino": -0.156,
+      "cagr": 0.77
+    },
+    {
+      "file": "strategies/trend/HA UnivLong&Short Futures.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "runtime-error",
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/trend/Heikin Ashi Strategy V2 [FAKE].pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/trend/MA Cross + DMI.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/trend/Supertrend + EMA rebound [Alorse].pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 17,
+      "closed": 16,
+      "open": 1,
+      "wins": 4,
+      "losses": 12,
+      "winRate": 23.5,
+      "netProfit": -376,
+      "netProfitPct": -3.76,
+      "initialCapital": 10000,
+      "maxDrawdownPct": 5.48,
+      "sharpe": -0.066,
+      "sortino": -0.087,
+      "cagr": -1.9
+    },
+    {
+      "file": "strategies/trend/Supertrend + RSI.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 6,
+      "closed": 6,
+      "open": 0,
+      "wins": 3,
+      "losses": 3,
+      "winRate": 50,
+      "netProfit": 0.07,
+      "netProfitPct": 0.01,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 3.27,
+      "sharpe": -0.185,
+      "sortino": -0.227,
+      "cagr": 0
+    },
+    {
+      "file": "strategies/trend/Supertrend.pine",
+      "version": 4,
+      "type": "strategy",
+      "status": "v4-unsupported",
+      "error": "Pine v4 not supported by PineTS (v5/v6 only)"
+    },
+    {
+      "file": "strategies/trend/Tendency EMA + RSI.pine",
+      "version": 5,
+      "type": "strategy",
+      "status": "ok",
+      "trades": 3,
+      "closed": 3,
+      "open": 0,
+      "wins": 2,
+      "losses": 1,
+      "winRate": 66.7,
+      "netProfit": 16.63,
+      "netProfitPct": 1.66,
+      "initialCapital": 1000,
+      "maxDrawdownPct": 1.97,
+      "sharpe": -0.208,
+      "sortino": -0.3,
+      "cagr": 0.83
+    }
+  ]
+}

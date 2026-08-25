@@ -1,0 +1,398 @@
+{
+  "generatedAt": "2026-08-25T05:23:12.005Z",
+  "byStatus": {
+    "v4-unsupported": 31,
+    "runtime-error": 15,
+    "syntax-ok": 26,
+    "syntax-error": 2
+  },
+  "results": [
+    {
+      "file": "indicators/3 MA + Cross.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/3 MTF EMA:SMA.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "indicators/5 EMA SMA + Cross.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/BB + 3EMA.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/BB Winner.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/Candle Percent Volatility [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/DMI + RSI Cross.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/DMI.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/KDJ.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/MACD Divergence.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/MACD.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/MTF+MACD.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "indicators/PivotHighLow.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "indicators/RSI Divergence.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/Range Filter [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/SuperTrend FromScrash.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/TTM Squeeze + MACD Line.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/TTM Squeeze.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "indicators/Williams Vix Fix + Inverse.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "multi/Alert BB + RSI.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "multi/Multi Alert Long:Short.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "multi/Multi MACD + BB + RSI.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "multi/Multi MTF + MACD.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "multi/Multi RSI Divergence.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "multi/Multi Supertrend.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "multi/RSI Multi Alerts.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'toLowerCase')"
+    },
+    {
+      "file": "strategies/MTF BB.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/MTF RSI.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/MTF+MACD.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/MacdNew.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/grid/GridBotDir [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/mean-reversion/BB + Aroon.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/mean-reversion/BB Divergence.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/mean-reversion/BB Winner LITE.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/mean-reversion/BB Winner PRO.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/mean-reversion/Bollinger Breakout [kodify].pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/mean-reversion/Exceeded candle.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/mean-reversion/MEMA + BB + RSI [Alorse].pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/mean-reversion/Multi BB.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/2 EMA:SMA + RSI.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/DMI Winner.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/momentum/Double RSI.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/momentum/MACD + BB + RSI.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/momentum/MACD + DMI.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/MACD Long Strategy [Bunghole].pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'mintick')"
+    },
+    {
+      "file": "strategies/momentum/MACD+RSI.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/QQE signals.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/RSI + 1200.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/momentum/RSI + EMA.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/momentum/Stoch RSI Crossover Strat + EMA - YT-Trade Pro.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/StochRSI + Supertrend Strategy.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/momentum/TTM Squeeze.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/momentum/Williams Vix Fix.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/other/Flawless Victory.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/other/Full Candle.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/other/Improvising [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/other/Javo v1 [Repaint].pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/other/Omar Edited WF.pine",
+      "status": "syntax-error",
+      "version": 5,
+      "error": "Failed to transpile Pine Script version 5: Unexpected token INDENT '' at 127:5"
+    },
+    {
+      "file": "strategies/other/Omar MMR [Alorse].pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'ticker')"
+    },
+    {
+      "file": "strategies/other/Password protected.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/other/Pin Bar Magic v1.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/other/StratBase.pine",
+      "status": "syntax-error",
+      "version": 5,
+      "error": "Failed to transpile Pine Script version 5: Unexpected token OPERATOR '=' at 21:13"
+    },
+    {
+      "file": "strategies/other/Strategy Tester [Lupown].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/other/TTM Squeeze EMA Strategy [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/trend/3 EMA:SMA + Cross.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/trend/Double Supertrend.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/trend/EMA Moving away Strategy [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/trend/HA UnivLong&Short Futures.pine",
+      "status": "runtime-error",
+      "version": 5,
+      "error": "Cannot read properties of undefined (reading 'tickerid')"
+    },
+    {
+      "file": "strategies/trend/Heikin Ashi Strategy V2 [FAKE].pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/trend/MA Cross + DMI.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/trend/Supertrend + EMA rebound [Alorse].pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/trend/Supertrend + RSI.pine",
+      "status": "syntax-ok",
+      "version": 5
+    },
+    {
+      "file": "strategies/trend/Supertrend.pine",
+      "status": "v4-unsupported",
+      "version": 4
+    },
+    {
+      "file": "strategies/trend/Tendency EMA + RSI.pine",
+      "status": "syntax-ok",
+      "version": 5
+    }
+  ]
+}
