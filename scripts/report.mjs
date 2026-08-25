@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Generate BACKTEST.md from data/backtest-results.json.
+ * Generate BACKTEST.md from data/backtest-results.json (multi-period comparison).
  *
  * Usage:  node scripts/report.mjs
  */
@@ -12,48 +12,76 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
 const resultsPath = path.join(ROOT, 'data', 'backtest-results.json');
 
-const { generatedAt, data, counts, results } = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+const { generatedAt, periods } = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
 
-const fmt = (v, suffix = '') => (v === null || v === undefined) ? '—' : `${v}${suffix}`;
+const fmt = (v, suffix = '') => (v === null || v === undefined || !isFinite(v)) ? '—' : `${v}${suffix}`;
 
-const ok = results.filter((r) => r.status === 'ok');
-const sorted = [...ok].sort((a, b) => (b.sharpe || -999) - (a.sharpe || -999));
+// Build the set of strategies that produced trades in at least one period.
+const byFile = {};
+for (const p of periods) {
+  for (const r of p.results) {
+    if (r.status !== 'ok') continue;
+    byFile[r.file] = byFile[r.file] || { name: path.basename(r.file, '.pine'), cat: (r.file.split('/').length >= 3 ? r.file.split('/')[1] : r.file.split('/')[0]) };
+  }
+}
 
-const rows = sorted.map((r) => {
-  const parts = r.file.split('/');
-  const cat = parts.length >= 3 ? parts[1] : parts[0];
-  const name = path.basename(r.file, '.pine');
-  return `| \`${name}\` | ${cat} | ${r.trades} | ${fmt(r.winRate, '%')} | ${fmt(r.netProfitPct, '%')} | ${fmt(r.maxDrawdownPct, '%')} | ${fmt(r.sharpe)} | ${fmt(r.sortino)} | ${fmt(r.cagr, '%')} |`;
+// Sort strategies by their best Sharpe across periods.
+const bestSharpe = (file) => Math.max(...periods.map((p) => {
+  const r = p.results.find((x) => x.file === file && x.status === 'ok');
+  return r && isFinite(r.sharpe) ? r.sharpe : -999;
+}));
+const files = Object.keys(byFile).sort((a, b) => bestSharpe(b) - bestSharpe(a));
+
+const periodLabel = (p) => {
+  const y0 = new Date(p.range[0]).getUTCFullYear();
+  const y1 = new Date(p.range[1]).getUTCFullYear();
+  return `${y0}-${y1}`;
+};
+
+// Header: one metric column per period.
+const metrics = ['sharpe', 'winRate', 'netProfitPct', 'maxDrawdownPct'];
+const meta = { sharpe: 'Sharpe', winRate: 'Win %', netProfitPct: 'Net %', maxDrawdownPct: 'Max DD %' };
+
+let header = '| Strategy | Category |';
+for (const p of periods) header += ` ${periodLabel(p)} · ${meta.sharpe} | ${periodLabel(p)} · ${meta.winRate} | ${periodLabel(p)} · ${meta.netProfitPct} | ${periodLabel(p)} · ${meta.maxDrawdownPct} |`;
+const sep = '|' + '---|'.repeat(2 + periods.length * 4);
+
+const rows = files.map((file) => {
+  const info = byFile[file];
+  let row = `| \`${info.name}\` | ${info.cat} |`;
+  for (const p of periods) {
+    const r = p.results.find((x) => x.file === file && x.status === 'ok');
+    if (!r || r.trades === 0) { row += ' — | — | — | — |'; continue; }
+    row += ` ${fmt(r.sharpe)} | ${fmt(r.winRate, '%')} | ${fmt(r.netProfitPct, '%')} | ${fmt(r.maxDrawdownPct, '%')} |`;
+  }
+  return row;
 }).join('\n');
 
-const vinr = (list, label) =>
-  list.length === 0 ? '' : `\n### ${label} (${list.length})\n\n${list.map((r) => `- \`${r.file}\``).join('\n')}\n`;
+const vinr = (list, label) => (list.length === 0 ? '' : `\n### ${label} (${list.length})\n\n${list.map((r) => `- \`${r.file}\``).join('\n')}\n`);
 
-const v4 = results.filter((r) => r.status === 'v4-unsupported');
-const ind = results.filter((r) => r.status === 'indicator');
-const run = results.filter((r) => r.status === 'runtime-error');
-const syn = results.filter((r) => r.status === 'syntax-error');
+// Aggregate non-OK classifications across the FIRST period (they're period-independent).
+const first = periods[0].results;
+const v4 = first.filter((r) => r.status === 'v4-unsupported');
+const ind = first.filter((r) => r.status === 'indicator');
+const run = first.filter((r) => r.status === 'runtime-error');
+const syn = first.filter((r) => r.status === 'syntax-error');
 
 const md = `# Backtest Results
 
 Automated backtests run by \`scripts/backtest.mjs\` using [PineTS](https://github.com/LuxAlgo/PineTS) (Pine Script v5/v6 runtime).
 
-## Dataset
+## Datasets
 
-| | |
-|---|---|
-| Symbol | \`BTCUSDT\` |
-| Timeframe | \`1d\` |
-| Bars | ${data.bars} |
-| Range | ${new Date(data.range[0]).toISOString().slice(0, 10)} → ${new Date(data.range[1]).toISOString().slice(0, 10)} |
-| Source | committed snapshot \`${data.file}\` (no network required) |
+| Period | Symbol | Timeframe | Bars | Range |
+|---|---|---|---|---|
+${periods.map((p) => `| \`${periodLabel(p)}\` | \`${p.symbol}\` | \`${p.timeframe}\` | ${p.bars} | ${new Date(p.range[0]).toISOString().slice(0, 10)} → ${new Date(p.range[1]).toISOString().slice(0, 10)} |`).join('\n')}
 
-## Strategies backtested (${ok.length})
+> Each committed snapshot is a fixed OHLCV capture (no network required), so results are reproducible.
 
-Sorted by Sharpe ratio. Metrics: total trades, win rate, net profit (% of initial capital), max drawdown %, Sharpe, Sortino, CAGR.
+## Strategy comparison (sorted by best Sharpe)
 
-| Strategy | Category | Trades | Win % | Net Profit % | Max DD % | Sharpe | Sortino | CAGR % |
-|---|---|---|---|---|---|---|---|---|
+${header}
+${sep}
 ${rows}
 
 ${vinr(ind, 'Indicators (no trades)')}
@@ -63,13 +91,13 @@ ${vinr(syn, 'Syntax errors')}
 
 ## Methodology & caveats
 
-- **Single dataset**: every strategy is run on the same BTCUSDT daily snapshot regardless of its intended symbol/timeframe. Results are a *comparison baseline*, not trading advice.
+- **Single symbol**: every strategy runs on BTCUSDT daily regardless of its intended symbol/timeframe. It's a *comparison baseline*, not trading advice.
 - **\`when=\` rewrite**: PineTS v0.9.32 does not implement the \`when=\` order parameter, so \`scripts/lib/pine-when-transform.mjs\` mechanically rewrites \`strategy.entry(..., when=cond)\` → \`if cond\` blocks (semantically equivalent in Pine) before running. Committed files are unchanged.
 - **Pine v4**: PineTS supports v5/v6 only, so 31 v4 scripts are classified but not backtested here.
 - **Multi-symbol / MTF**: strategies using \`request.security()\` over dynamic tickers fail at runtime without a live symbol context.
-- **Divergence from TradingView**: PineTS documents minor known divergences (commission rounding, intra-bar fills, Sharpe computed off the monthly equity curve to ~2 decimals). Treat these numbers as approximate.
+- **Divergence from TradingView**: PineTS documents minor known divergences (commission rounding, intra-bar fills, Sharpe off the monthly equity curve to ~2 decimals). Treat numbers as approximate.
 - **Generated**: ${generatedAt}
 `;
 
 fs.writeFileSync(path.join(ROOT, 'BACKTEST.md'), md);
-console.log(`Wrote BACKTEST.md (${ok.length} strategies, ${v4.length} v4, ${ind.length} indicators, ${run.length} runtime, ${syn.length} syntax).`);
+console.log(`Wrote BACKTEST.md (${files.length} strategies × ${periods.length} periods).`);
